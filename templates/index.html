@@ -24,62 +24,63 @@
     </div>
 
     <!-- 4 Key Metrics Cards -->
+    <!-- 4 Key Metrics Cards (Clickable Quick Access) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Rejali vazifalar -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <a href="/work-plans" title="Barcha rejali vazifalar va bandlarni ko‘rish" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block group">
             <div>
-                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Rejali vazifalar</p>
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition">Rejali vazifalar</p>
                 <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ total_tasks }} ta</h3>
                 <p class="text-xs text-emerald-600 font-medium mt-1">
                     <i class="fa-solid fa-check-double mr-1"></i> Bajarildi: {{ done_tasks }} ta
                 </p>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+            <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
                 <i class="fa-solid fa-list-check"></i>
             </div>
-        </div>
+        </a>
 
         <!-- Hududiy topshiriqlar -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <a href="/district-assignments" title="Hududlarga yuklatilgan topshiriqlar va IIB taqdimnomalarini ko‘rish" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block group">
             <div>
-                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Hududlarga yuklatilgan</p>
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition">Hududlarga yuklatilgan</p>
                 <h3 class="text-2xl font-bold text-slate-800 mt-1">{{ total_assignments }} ta</h3>
                 <p class="text-xs text-blue-600 font-medium mt-1">
                     <i class="fa-solid fa-map-pin mr-1"></i> 19 ta tuman/shahar kesimida
                 </p>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
+            <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
                 <i class="fa-solid fa-building-flag"></i>
             </div>
-        </div>
+        </a>
 
         <!-- 15-talik oylik monitoring -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <a href="/monthly-15" title="15-talik oylik hisobotlar monitoringiga o‘tish" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block group">
             <div>
-                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Oylik "15-talik" hisobot</p>
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition">Oylik "15-talik" hisobot</p>
                 <h3 class="text-2xl font-bold text-emerald-600 mt-1">100% topshirildi</h3>
                 <p class="text-xs text-slate-500 mt-1">
                     <i class="fa-solid fa-lock mr-1"></i> Avgust oyi qabul qilingan
                 </p>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
                 <i class="fa-solid fa-calendar-check"></i>
             </div>
-        </div>
+        </a>
 
         <!-- 10-kunlik favqulodda nazorat -->
-        <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between">
+        <a href="/incidents" title="10-kunlik profilaktika va favqulodda nazorat hodisalariga o‘tish" class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex items-center justify-between cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block group">
             <div>
-                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">10-kunlik nazoratdagi</p>
+                <p class="text-xs font-medium text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition">10-kunlik nazoratdagi</p>
                 <h3 class="text-2xl font-bold text-red-600 mt-1">{{ total_incidents }} ta</h3>
                 <p class="text-xs text-red-500 font-medium mt-1">
                     <i class="fa-solid fa-triangle-exclamation mr-1"></i> Shoshilinch: {{ critical_incidents }} ta
                 </p>
             </div>
-            <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl">
+            <div class="w-12 h-12 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl group-hover:scale-110 transition">
                 <i class="fa-solid fa-shield-halved"></i>
             </div>
-        </div>
+        </a>
     </div>
 
     <!-- Chart: 2025 vs 2026 Juvenile Crime Dynamics -->

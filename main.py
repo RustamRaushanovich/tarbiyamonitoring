@@ -456,7 +456,7 @@ async def work_plans_matrix_page(request: Request, year: int = 2026, curator: st
     })
 
 @app.get("/district-assignments", response_class=HTMLResponse)
-async def district_assignments_page(request: Request, district_id: int = 0):
+async def district_assignments_page(request: Request, district_id: int = 0, filter_type: str = ""):
     user = get_current_user(request)
     if not user:
         return RedirectResponse(url="/login", status_code=302)
@@ -491,6 +491,17 @@ async def district_assignments_page(request: Request, district_id: int = 0):
     if district_id > 0:
         query += " AND a.district_id = ?"
         params.append(district_id)
+
+    if filter_type == "iib":
+        query += " AND a.doc_type = 'IIB taqdimnomasi'"
+    elif filter_type == "murojaat":
+        query += " AND a.doc_type = 'Fuqaro murojaati'"
+    elif filter_type == "topshiriq":
+        query += " AND (a.doc_type NOT IN ('IIB taqdimnomasi', 'Fuqaro murojaati') OR a.doc_type IS NULL)"
+    elif filter_type == "submitted":
+        query += " AND a.status IN ('Hisobot topshirildi', 'Tasdiqlandi')"
+    elif filter_type == "pending":
+        query += " AND a.status IN ('Yangi', 'Kutilmoqda')"
 
     query += " ORDER BY a.id DESC"
     cursor.execute(query, params)
@@ -535,6 +546,7 @@ async def district_assignments_page(request: Request, district_id: int = 0):
         "assignments": assignments,
         "districts": districts,
         "selected_district": district_id,
+        "selected_filter": filter_type,
         "stats": stats or {}
     })
 

@@ -12,7 +12,25 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        html {
+            font-size: 14px;
+            -webkit-text-size-adjust: 100%;
+        }
+        @media (min-width: 1024px) { html { font-size: 15px; } }
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+        img, svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .emblem-img {
+            aspect-ratio: 1 / 1;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 <body class="bg-white min-h-screen flex flex-col justify-center selection:bg-blue-500 selection:text-white">

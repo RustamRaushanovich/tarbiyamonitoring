@@ -22,113 +22,154 @@
     <link rel="icon" type="image/png" href="/static/img/emblem.png">
     <link rel="apple-touch-icon" href="/static/img/app-icon.png">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .gradient-header { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        /* Smooth Responsive Typography Scaling */
+        html {
+            font-size: 14px;
+            -webkit-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+            scroll-behavior: smooth;
+        }
+        @media (min-width: 640px) { html { font-size: 14px; } }
+        @media (min-width: 1024px) { html { font-size: 14.5px; } }
+        @media (min-width: 1440px) { html { font-size: 15px; } }
+        @media (min-width: 1920px) { html { font-size: 15.5px; } }
+
+        body { 
+            font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+            background-color: #f8fafc;
+            width: 100%;
+            min-height: 100vh;
+            overflow-x: hidden;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .gradient-header { 
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); 
+        }
+
+        /* Image, Icon and Emblem Protection */
+        img, svg {
+            max-width: 100%;
+            height: auto;
+        }
+        .emblem-img {
+            aspect-ratio: 1 / 1;
+            object-fit: contain;
+            flex-shrink: 0;
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        /* Responsive Table Container */
+        .overflow-x-auto {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Fluid Layout Utility */
+        .fluid-shell {
+            width: 100%;
+            max-width: 100%;
+            padding-left: clamp(0.75rem, 2vw, 2.5rem);
+            padding-right: clamp(0.75rem, 2vw, 2.5rem);
+        }
+
+        /* Custom Crisp Scrollbar */
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
     </style>
 </head>
-<body class="flex flex-col min-h-screen text-slate-800">
+<body class="flex flex-col min-h-screen text-slate-800 antialiased w-full overflow-x-hidden">
 
     <!-- Top Navigation Bar -->
-    <header class="gradient-header text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center space-x-3">
-                    <a href="/" class="flex-shrink-0">
-                        <img src="/static/img/emblem.png" alt="Emblem" class="w-11 h-11 object-contain drop-shadow-md hover:scale-105 transition transform">
+    <header class="gradient-header text-white shadow-lg sticky top-0 z-40 w-full border-b border-blue-400/20">
+        <div class="w-full max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12">
+            <div class="flex items-center justify-between h-20 sm:h-22 gap-3 py-2">
+                
+                <!-- Left: CHAP TOMONDAGI SLIDEBAR MENYU TUGMASI + Rasmiy Emblema + Sayt Nomi va Mazmuni -->
+                <div class="flex items-center space-x-3 sm:space-x-4 min-w-0">
+                    <!-- Slidebar Menu Button (CHAP TOMONDA) -->
+                    <button type="button" onclick="toggleSlidebar()" 
+                            class="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs shadow-md shadow-amber-500/25 transition transform hover:scale-105 active:scale-95 border border-amber-300 cursor-pointer flex-shrink-0" 
+                            title="Barcha bo‘limlar va navigatsiya menyusi (M)">
+                        <i id="slidebarBtnIcon" class="fa-solid fa-bars text-sm"></i>
+                        <span class="font-black tracking-wide text-xs sm:text-sm">Menyu</span>
+                        <span class="inline-flex items-center justify-center w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+                    </button>
+
+                    <a href="/" class="flex-shrink-0 group block" title="Bosh sahifa">
+                        <img src="/static/img/emblem.png" alt="O‘zbekiston Respublikasi Davlat Gerbi" class="w-12 h-12 sm:w-14 sm:h-14 emblem-img object-contain drop-shadow-md group-hover:scale-105 transition transform">
                     </a>
-                    <div>
-                        <a href="/" class="font-black text-lg tracking-tight block leading-tight">Farg‘ona viloyati MMTB</a>
-                        <span class="text-[11px] text-blue-200 block font-medium">Ma’naviyat va tarbiya monitoringi</span>
+                    <div class="min-w-0">
+                        <a href="/" class="font-black text-sm sm:text-base lg:text-lg tracking-tight block leading-tight truncate text-white hover:text-blue-100 transition">
+                            Farg‘ona viloyati Maktabgacha va maktab ta’limi boshqarmasi
+                        </a>
+                        <span class="text-[11px] sm:text-xs text-blue-200 block font-medium truncate mt-0.5">
+                            Ma’naviyat, tarbiya va ijro intizomi monitoringi axborot tizimi
+                        </span>
                     </div>
                 </div>
 
-                <nav class="hidden lg:flex space-x-1">
-                    {% if current_user and current_user.role == 'district' %}
-                    <a href="/district-portal" class="px-3 py-2 rounded-lg text-sm font-bold hover:bg-white/10 transition flex items-center gap-1.5 text-yellow-300">
-                        <i class="fa-solid fa-building-flag text-xs"></i> Mening Hududim
-                    </a>
-                    <a href="/monthly-15?district={{ current_user.district_name | urlencode }}" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-table-list text-xs"></i> 15-talik monitoring
-                    </a>
-                    <a href="/district-assignments?district_id={{ current_user.district_id }}" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-clipboard-check text-xs"></i> Topshiriqlarim
-                    </a>
-                    <a href="/incidents?district_id={{ current_user.district_id }}" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-shield-halved text-xs text-red-300"></i> 10 kunlik nazorat
-                    </a>
-                    {% else %}
-                    <a href="/" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-chart-pie text-xs"></i> Bosh sahifa
-                    </a>
-                    <a href="/work-plans" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-list-check text-xs"></i> Ish rejalari
-                    </a>
-                    <a href="/work-plans/matrix" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-table-cells text-xs text-amber-300"></i> Matritsa & Tahlil
-                    </a>
-                    <a href="/ratings" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5 text-amber-300 font-bold">
-                        <i class="fa-solid fa-trophy text-xs text-amber-400"></i> KPI Reyting
-                    </a>
-                    <a href="/dynamics" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5 text-cyan-300 font-bold">
-                        <i class="fa-solid fa-chart-line text-xs text-cyan-400"></i> Dinamika
-                    </a>
-                    <a href="/district-assignments" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-building-flag text-xs"></i> Hududiy vazifalar
-                    </a>
-                    <a href="/monthly-15" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-table-list text-xs"></i> 15-talik monitoring
-                    </a>
-                    <a href="/incidents" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-shield-halved text-xs text-red-300"></i> 10 kunlik nazorat
-                    </a>
-                    <a href="/reports" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
-                        <i class="fa-solid fa-file-word text-xs text-blue-300"></i> Hisobotlar
-                    </a>
-                    <a href="/admin/users" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5 text-yellow-300 font-bold bg-white/10">
-                        <i class="fa-solid fa-id-card-clip text-xs"></i> Hududlar & Parollar
-                    </a>
-                    <a href="/admin/audit" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5 text-blue-100">
-                        <i class="fa-solid fa-clock-rotate-left text-xs text-amber-300"></i> Audit
-                    </a>
-                    {% endif %}
-                </nav>
+                <!-- Center: Sana va O‘zbekiston vaqti bilan jonli soat (Live Tashkent Time Clock) -->
+                <div class="hidden lg:flex items-center gap-3 bg-white/10 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/20 text-xs shadow-inner flex-shrink-0">
+                    <div class="flex items-center gap-1.5 text-blue-100 font-semibold">
+                        <i class="fa-regular fa-calendar-days text-amber-300 text-sm"></i>
+                        <span id="uzbDateBadge" class="whitespace-nowrap">Yuklanmoqda...</span>
+                    </div>
+                    <span class="text-white/30 font-light">|</span>
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-regular fa-clock text-amber-400 text-sm animate-pulse"></i>
+                        <span id="uzbTimeBadge" class="font-mono text-amber-300 font-extrabold tracking-wider text-base whitespace-nowrap">--:--:--</span>
+                        <span class="text-[9px] uppercase px-1.5 py-0.5 rounded bg-emerald-500/25 text-emerald-300 font-black border border-emerald-400/30 whitespace-nowrap">O‘ZB (UTC+5)</span>
+                    </div>
+                </div>
 
-                <!-- Search trigger + Backup + Profile + Logout -->
-                <div class="flex items-center space-x-2.5">
-                    <!-- PWA Install Button -->
-                    <button id="btnInstallApp" onclick="installPwaApp()" class="hidden items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 px-2.5 py-1.5 rounded-lg text-xs font-black transition shadow-sm animate-pulse">
-                        <i class="fa-solid fa-mobile-screen"></i>
-                        <span class="hidden md:inline">Ilovani o‘rnatish</span>
-                    </button>
-
-                    {% if not current_user or current_user.role != 'district' %}
+                <!-- Right Controls: Qidiruv, User Info, Chiqish -->
+                <div class="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
                     <!-- Global Search Button (Ctrl+K) -->
-                    <button onclick="openGlobalSearch()" class="hidden sm:flex items-center space-x-2 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition border border-white/20">
-                        <i class="fa-solid fa-magnifying-glass text-blue-200"></i>
-                        <span>Tezkor qidiruv</span>
-                        <kbd class="px-1.5 py-0.5 text-[10px] bg-white/20 rounded text-blue-100 font-mono">Ctrl+K</kbd>
+                    <button onclick="openGlobalSearch()" class="hidden sm:flex items-center space-x-1.5 bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl text-xs font-semibold text-white transition border border-white/20 shadow-2xs cursor-pointer">
+                        <i class="fa-solid fa-magnifying-glass text-blue-200 text-xs"></i>
+                        <span class="hidden xl:inline">Qidiruv</span>
+                        <kbd class="px-1.5 py-0.5 text-[9px] bg-white/20 rounded text-blue-100 font-mono">Ctrl+K</kbd>
                     </button>
 
-                    <!-- Backup Button -->
-                    <a href="/api/admin/backup" title="Tizim zaxira nusxasini olish (ZIP)" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-sm">
-                        <i class="fa-solid fa-download"></i>
-                        <span class="hidden md:inline">Zaxira (ZIP)</span>
-                    </a>
-                    {% endif %}
+                    <!-- PWA Install Button -->
+                    <button id="btnInstallApp" onclick="installPwaApp()" class="hidden items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 px-3 py-2 rounded-xl text-xs font-black transition shadow-sm animate-pulse cursor-pointer">
+                        <i class="fa-solid fa-mobile-screen"></i>
+                        <span class="hidden xl:inline">Ilovani o‘rnatish</span>
+                    </button>
 
-                    <div class="text-right hidden sm:block pl-2 border-l border-white/20">
+                    <!-- User Pill (FIO and Role) -->
+                    <div class="text-right hidden xl:block pl-2 border-l border-white/20">
                         <div class="text-xs font-bold leading-tight">{{ current_user.fio if current_user else 'Administrator' }}</div>
                         <div class="text-[10px] text-blue-200">
                             {% if current_user and current_user.role == 'district' %}
                                 {{ current_user.district_name }} mas’uli
                             {% else %}
-                                Farg‘ona viloyati MMTB
+                                Boshqarma mas’uli
                             {% endif %}
                         </div>
                     </div>
 
-                    <a href="/logout" title="Tizimdan chiqish" class="bg-red-500/80 hover:bg-red-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-xs">
+                    <!-- Quick Logout -->
+                    <a href="/logout" title="Tizimdan chiqish" class="bg-red-500/80 hover:bg-red-600 text-white p-2 sm:px-2.5 sm:py-2 rounded-xl text-xs font-bold flex items-center gap-1 transition shadow-xs">
                         <i class="fa-solid fa-right-from-bracket"></i>
                         <span class="hidden md:inline">Chiqish</span>
                     </a>
@@ -137,14 +178,278 @@
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- ==================== LEFT SLIDEBAR MENU DRAWER (CHAP TOMONDAGI SLIDEBAR MENYU) ==================== -->
+    <!-- Backdrop overlay -->
+    <div id="slidebarBackdrop" onclick="toggleSlidebar(false)" 
+         class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-50 hidden transition-opacity duration-300 opacity-0 cursor-pointer"></div>
+
+    <!-- Slidebar container (Slides smoothly from LEFT) -->
+    <aside id="mainSlidebar" 
+           class="fixed inset-y-0 left-0 z-50 w-full sm:w-[380px] md:w-[420px] bg-slate-900 text-white shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out flex flex-col border-r border-slate-700/80">
+        
+        <!-- Slidebar Header -->
+        <div class="p-5 border-b border-slate-800 bg-slate-950/90 flex items-center justify-between flex-shrink-0">
+            <div class="flex items-center gap-3">
+                <img src="/static/img/emblem.png" alt="Emblem" class="w-10 h-10 emblem-img object-contain">
+                <div>
+                    <h3 class="font-black text-sm text-white tracking-tight">Tizim Bo‘limlari</h3>
+                    <p class="text-[11px] text-slate-400">Navigatsiya va tahliliy xizmatlar</p>
+                </div>
+            </div>
+            <button onclick="toggleSlidebar(false)" 
+                    class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition cursor-pointer"
+                    title="Yopish (ESC)">
+                <i class="fa-solid fa-xmark text-base"></i>
+            </button>
+        </div>
+
+        <!-- Uzbekistan Clock inside Slidebar (Mobile & Desktop) -->
+        <div class="px-5 py-3 bg-gradient-to-r from-blue-950/90 to-indigo-950/90 border-b border-slate-800 flex items-center justify-between text-xs flex-shrink-0">
+            <div class="flex items-center gap-2 text-slate-300">
+                <i class="fa-regular fa-calendar-days text-amber-400"></i>
+                <span id="slidebarUzbDate">30-sentyabr, 2026-yil</span>
+            </div>
+            <div class="flex items-center gap-1.5 font-mono text-amber-300 font-bold">
+                <i class="fa-regular fa-clock text-amber-400"></i>
+                <span id="slidebarUzbTime">--:--:--</span>
+                <span class="text-[9px] px-1 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30">O‘ZB</span>
+            </div>
+        </div>
+
+        <!-- Slidebar Navigation Links List (Scrollable) -->
+        <div class="flex-grow overflow-y-auto p-4 space-y-4 text-xs">
+            
+            {% if current_user and current_user.role == 'district' %}
+            <!-- Tuman Mas'uli Bo'limlari -->
+            <div>
+                <span class="px-2 text-[10px] font-extrabold uppercase tracking-wider text-amber-400 block mb-1.5">
+                    Mening Hududim
+                </span>
+                <div class="space-y-1">
+                    <a href="/district-portal" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-amber-500/10 text-amber-300 font-bold hover:bg-amber-500/20 border border-amber-500/30 transition">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold flex-shrink-0">
+                            <i class="fa-solid fa-building-flag text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-black">Mening Hududiy Portalim</div>
+                            <div class="text-[10px] text-slate-400 font-normal">{{ current_user.district_name }}</div>
+                        </div>
+                    </a>
+                    <a href="/monthly-15?district={{ current_user.district_name | urlencode }}" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/5 transition">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold flex-shrink-0">
+                            <i class="fa-solid fa-table-list text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">15-talik Oylik Monitoring</div>
+                            <div class="text-[10px] text-slate-400 font-normal">18 ta jadval to‘ldirish va eksport</div>
+                        </div>
+                    </a>
+                    <a href="/district-assignments?district_id={{ current_user.district_id }}" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/5 transition">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold flex-shrink-0">
+                            <i class="fa-solid fa-clipboard-check text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Hududiy Vazifalarim & Taqdimnomalar</div>
+                            <div class="text-[10px] text-slate-400 font-normal">Javob xati va PDF asoslarini yuklash</div>
+                        </div>
+                    </a>
+                    <a href="/incidents?district_id={{ current_user.district_id }}" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/5 transition">
+                        <div class="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center font-bold flex-shrink-0">
+                            <i class="fa-solid fa-shield-halved text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">10-kunlik Favqulodda Nazorat</div>
+                            <div class="text-[10px] text-slate-400 font-normal">Huquqbuzarliklar profilaktikasi</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Asosiy Monitoring Bo'limlari -->
+            <div>
+                <span class="px-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1.5">
+                    Asosiy Ko‘rsatkichlar & Tahlil
+                </span>
+                <div class="space-y-1">
+                    <a href="/" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10 hover:text-white transition group">
+                        <div class="w-8 h-8 rounded-lg bg-blue-600/30 text-blue-400 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-chart-pie text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Bosh sahifa (Dashboard)</div>
+                            <div class="text-[10px] text-slate-400">Tezkor viloyat statistikasi</div>
+                        </div>
+                    </a>
+
+                    <a href="/work-plans" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10 hover:text-white transition group">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-600/30 text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-list-check text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Ish rejalari ijrosi</div>
+                            <div class="text-[10px] text-slate-400">63 ta band va mas’ullar monitoringi</div>
+                        </div>
+                    </a>
+
+                    <a href="/work-plans/matrix" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-amber-300 hover:bg-amber-400/10 hover:text-amber-200 transition group">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-900 flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-table-cells text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Matritsa & Avtomatik Tahlil</div>
+                            <div class="text-[10px] text-slate-400">19 ta hudud ijrosi va hujjatlar arxivi</div>
+                        </div>
+                    </a>
+
+                    <a href="/ratings" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-amber-300 hover:bg-amber-400/10 hover:text-amber-200 transition group">
+                        <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 group-hover:bg-amber-500 group-hover:text-slate-900 flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-trophy text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Jonli KPI Reyting</div>
+                            <div class="text-[10px] text-slate-400">Yetakchi tumanlar va hudud toifalari</div>
+                        </div>
+                    </a>
+
+                    <a href="/dynamics" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-cyan-300 hover:bg-cyan-400/10 hover:text-cyan-200 transition group">
+                        <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 group-hover:bg-cyan-500 group-hover:text-slate-900 flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-chart-line text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Jinoyatchilik Dinamikasi</div>
+                            <div class="text-[10px] text-slate-400">2025 vs 2026 qiyosiy tahlili</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Nazorat & Vazifalar -->
+            <div>
+                <span class="px-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1.5">
+                    Hujjatlar & Hududiy Nazorat
+                </span>
+                <div class="space-y-1">
+                    <a href="/district-assignments" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10 hover:text-white transition group">
+                        <div class="w-8 h-8 rounded-lg bg-blue-600/30 text-blue-400 group-hover:bg-blue-600 group-hover:text-white flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-building-flag text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Hududiy Vazifalar & Taqdimnomalar</div>
+                            <div class="text-[10px] text-slate-400">IIB taqdimnomalari, murojaat va topshiriqlar</div>
+                        </div>
+                    </a>
+
+                    <a href="/monthly-15" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10 hover:text-white transition group">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-600/30 text-emerald-400 group-hover:bg-emerald-600 group-hover:text-white flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-table-list text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">15-talik Oylik Monitoring</div>
+                            <div class="text-[10px] text-slate-400">18 ta jadval to‘liq bazasi</div>
+                        </div>
+                    </a>
+
+                    <a href="/incidents" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-300 hover:bg-red-500/10 hover:text-red-200 transition group">
+                        <div class="w-8 h-8 rounded-lg bg-red-600/30 text-red-400 group-hover:bg-red-600 group-hover:text-white flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-shield-halved text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">10-kunlik Favqulodda Nazorat</div>
+                            <div class="text-[10px] text-slate-400">Voyaga yetmaganlar profilaktikasi</div>
+                        </div>
+                    </a>
+
+                    <a href="/reports" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-blue-200 hover:bg-blue-500/10 hover:text-white transition group">
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 group-hover:bg-blue-500 group-hover:text-white flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-file-word text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Oylik Tahliliy Hisobotlar</div>
+                            <div class="text-[10px] text-slate-400">Rasmiy Word va Excel kitoblar eksporti</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tizim & Boshqaruv (Admin / Rahbariyat) -->
+            {% if not current_user or current_user.role != 'district' %}
+            <div>
+                <span class="px-2 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 block mb-1.5">
+                    Tizim Boshqaruvi
+                </span>
+                <div class="space-y-1">
+                    <a href="/admin/users" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-yellow-300 hover:bg-yellow-400/10 hover:text-yellow-200 transition group">
+                        <div class="w-8 h-8 rounded-lg bg-yellow-500/20 text-yellow-400 group-hover:bg-yellow-500 group-hover:text-slate-900 flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-id-card-clip text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Hududlar & Parollar</div>
+                            <div class="text-[10px] text-slate-400">19 ta tuman MMTB akkauntlari</div>
+                        </div>
+                    </a>
+
+                    <a href="/admin/audit" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-200 hover:bg-white/10 hover:text-white transition group">
+                        <div class="w-8 h-8 rounded-lg bg-slate-700 text-slate-300 group-hover:bg-slate-600 group-hover:text-white flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-clock-rotate-left text-sm text-amber-300"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Audit & Harakatlar Jurnali</div>
+                            <div class="text-[10px] text-slate-400">Xavfsizlik va kirishlar nazorati</div>
+                        </div>
+                    </a>
+
+                    <a href="/api/admin/backup" onclick="toggleSlidebar(false)" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-emerald-300 hover:bg-emerald-400/10 hover:text-emerald-200 transition group">
+                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 group-hover:bg-emerald-500 group-hover:text-slate-900 flex items-center justify-center transition flex-shrink-0">
+                            <i class="fa-solid fa-download text-sm"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs font-bold">Tizim Zaxira Nusxasi (ZIP)</div>
+                            <div class="text-[10px] text-slate-400">Baza va barcha fayllarni yuklash</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Slidebar Footer -->
+        <div class="p-4 border-t border-slate-800 bg-slate-950 flex flex-col gap-3 flex-shrink-0">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold text-white">{{ current_user.fio if current_user else 'Administrator' }}</div>
+                    <div class="text-[10px] text-slate-400">
+                        {{ current_user.district_name if (current_user and current_user.district_name) else 'Boshqarma mas’uli' }}
+                    </div>
+                </div>
+                <a href="/logout" class="px-3.5 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 transition shadow-xs">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                    <span>Chiqish</span>
+                </a>
+            </div>
+            <div class="text-center text-[10px] text-slate-500">
+                Klaviatura: <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">ESC</kbd> yopish, <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">M</kbd> menyuni ochish
+            </div>
+        </div>
+    </aside>
+
+    <!-- FLOATING LEFT SIDEBAR TAB / HANDLE (Sahifaning chap tomonidagi doimiy slidebar yorlig'i) -->
+    <button onclick="toggleSlidebar()" 
+            title="Bo‘limlar menyusini ochish (M)" 
+            class="fixed top-1/2 left-0 -translate-y-1/2 z-40 bg-gradient-to-r from-blue-700 to-indigo-800 hover:from-blue-600 hover:to-indigo-700 text-white py-3 px-1.5 rounded-r-2xl shadow-xl border-y border-r border-white/20 flex flex-col items-center gap-1.5 group cursor-pointer transition transform hover:translate-x-1">
+        <i class="fa-solid fa-bars text-sm group-hover:scale-110 transition"></i>
+        <span class="text-[9px] font-black uppercase tracking-widest [writing-mode:vertical-lr] text-amber-300">MENYU</span>
+    </button>
+
+    <!-- Main Content Container (Full-screen fluid responsive up to 1920px) -->
+    <main class="flex-grow w-full max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 py-5 sm:py-6">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
-        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <!-- Footer (Full-screen fluid) -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500 w-full mt-auto">
+        <div class="w-full max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 flex flex-col sm:flex-row items-center justify-between gap-3">
             <p>© 2026 Farg‘ona viloyati Maktabgacha va maktab ta’limi boshqarmasi. Barcha huquqlar himoyalangan.</p>
             <div class="flex items-center space-x-4">
                 <a href="/reports/print-summary?month=8" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
@@ -488,6 +793,84 @@
         function closeStudentPassportModal() {
             document.getElementById('studentPassportModal').classList.add('hidden');
         }
+
+        function toggleSlidebar(forceState) {
+            const slidebar = document.getElementById('mainSlidebar');
+            const backdrop = document.getElementById('slidebarBackdrop');
+            if (!slidebar || !backdrop) return;
+
+            const isClosed = slidebar.classList.contains('-translate-x-full');
+            const shouldOpen = (forceState !== undefined) ? forceState : isClosed;
+
+            if (shouldOpen) {
+                backdrop.classList.remove('hidden');
+                void backdrop.offsetWidth;
+                backdrop.classList.remove('opacity-0');
+                backdrop.classList.add('opacity-100');
+                slidebar.classList.remove('-translate-x-full');
+                document.body.style.overflow = 'hidden';
+            } else {
+                slidebar.classList.add('-translate-x-full');
+                backdrop.classList.remove('opacity-100');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => {
+                    backdrop.classList.add('hidden');
+                    document.body.style.overflow = '';
+                }, 300);
+            }
+        }
+        const toggleLeftSlidebar = toggleSlidebar;
+        const toggleRightSlidebar = toggleSlidebar;
+        const toggleMobileNavMenu = toggleSlidebar;
+
+        // Live Uzbekistan Date & Clock (Toshkent vaqti UTC+5)
+        function updateUzbekistanClock() {
+            try {
+                const now = new Date();
+                const uzbDateStr = new Intl.DateTimeFormat('uz-UZ', {
+                    timeZone: 'Asia/Tashkent',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    weekday: 'short'
+                }).format(now);
+
+                const uzbTimeStr = new Intl.DateTimeFormat('uz-UZ', {
+                    timeZone: 'Asia/Tashkent',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                }).format(now);
+
+                const dateBadge = document.getElementById('uzbDateBadge');
+                const timeBadge = document.getElementById('uzbTimeBadge');
+                const slideDate = document.getElementById('slidebarUzbDate');
+                const slideTime = document.getElementById('slidebarUzbTime');
+
+                if (dateBadge) dateBadge.textContent = uzbDateStr;
+                if (timeBadge) timeBadge.textContent = uzbTimeStr;
+                if (slideDate) slideDate.textContent = uzbDateStr;
+                if (slideTime) slideTime.textContent = uzbTimeStr;
+            } catch(e) {
+                const now = new Date();
+                const timeBadge = document.getElementById('uzbTimeBadge');
+                if (timeBadge) timeBadge.textContent = now.toLocaleTimeString();
+            }
+        }
+        setInterval(updateUzbekistanClock, 1000);
+        updateUzbekistanClock();
+
+        // Keyboard navigation: ESC closes slidebar, M toggles it
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                toggleSlidebar(false);
+                closeGlobalSearch();
+                closeStudentPassportModal();
+            } else if ((e.key === 'm' || e.key === 'M') && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                toggleSlidebar();
+            }
+        });
 
         // PWA Service Worker Registration & Installation Prompt
         if ('serviceWorker' in navigator) {

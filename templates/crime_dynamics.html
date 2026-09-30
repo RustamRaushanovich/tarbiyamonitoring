@@ -24,13 +24,15 @@
         </div>
     </div>
 
-    <!-- KPI Summary Metric Cards -->
+    <!-- KPI Summary Metric Cards (Clickable Filter & Navigation Buttons) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- 1. Regional Trend -->
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+        <div onclick="scrollToSection('districtChartCard')" 
+             title="Viloyat va tumanlar qiyosiy diagrammasiga o‘tish" 
+             class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Viloyat Bo‘yicha Dinamika</span>
-                <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition">Viloyat Bo‘yicha Dinamika</span>
+                <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold group-hover:scale-110 transition">
                     <i class="fa-solid fa-arrow-trend-down text-lg"></i>
                 </span>
             </div>
@@ -41,13 +43,18 @@
             <p class="text-[11px] text-slate-500 mt-1">
                 2025 y. (140 ta) ➔ 2026 y. (114 ta) jinoyat
             </p>
+            <span class="text-[10px] text-emerald-600 font-bold mt-1 inline-flex items-center gap-1 group-hover:underline">
+                <i class="fa-solid fa-chart-column text-[9px]"></i> Diagrammani ko‘rish
+            </span>
         </div>
 
         <!-- 2. Decreased Districts -->
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+        <div onclick="filterDynamicsTable('kamaygan')" 
+             title="Kamayishga erishgan 10 ta hududni saralab ko‘rsatish" 
+             class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Kamayishga Erishganlar</span>
-                <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition">Kamayishga Erishganlar</span>
+                <span class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold group-hover:scale-110 transition">
                     <i class="fa-solid fa-circle-check text-lg"></i>
                 </span>
             </div>
@@ -58,13 +65,18 @@
             <p class="text-[11px] text-emerald-600 font-semibold mt-1">
                 Eng katta pasayish: Farg‘ona sh. (-11), Qo‘shtepa (-7)
             </p>
+            <span class="text-[10px] text-emerald-700 font-bold mt-1 inline-flex items-center gap-1 group-hover:underline">
+                <i class="fa-solid fa-arrow-down text-[9px]"></i> Jadvalda saralash
+            </span>
         </div>
 
         <!-- 3. Increased Districts -->
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80">
+        <div onclick="filterDynamicsTable('osgan')" 
+             title="Jinoyatchilik oshgan 5 ta hududni saralab ko‘rsatish" 
+             class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200/80 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">O‘sish Qayd Etilganlar</span>
-                <span class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition">O‘sish Qayd Etilganlar</span>
+                <span class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold group-hover:scale-110 transition">
                     <i class="fa-solid fa-triangle-exclamation text-lg"></i>
                 </span>
             </div>
@@ -75,13 +87,18 @@
             <p class="text-[11px] text-red-600 font-semibold mt-1">
                 Bag‘dod (+8), Buvayda (+3), Farg‘ona t. (+2)
             </p>
+            <span class="text-[10px] text-red-600 font-bold mt-1 inline-flex items-center gap-1 group-hover:underline">
+                <i class="fa-solid fa-arrow-down text-[9px]"></i> Jadvalda saralash
+            </span>
         </div>
 
         <!-- 4. School Time Crimes -->
-        <div class="bg-white rounded-2xl p-5 shadow-sm border border-red-200/80 bg-red-50/10">
+        <a href="/incidents?school_time=1" 
+           title="Dars vaqtida sodir etilgan barcha 35 ta jinoyat ro‘yxatiga o‘tish" 
+           class="bg-white rounded-2xl p-5 shadow-sm border border-red-200/80 bg-red-50/10 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block group">
             <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-red-700 uppercase tracking-wider">Dars Vaqtidagi Jinoyatlar</span>
-                <span class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold animate-pulse">
+                <span class="text-xs font-bold text-red-700 uppercase tracking-wider group-hover:text-red-900 transition">Dars Vaqtidagi Jinoyatlar</span>
+                <span class="w-10 h-10 rounded-xl bg-red-100 text-red-600 flex items-center justify-center font-bold group-hover:scale-110 transition animate-pulse">
                     <i class="fa-solid fa-clock text-lg"></i>
                 </span>
             </div>
@@ -92,11 +109,14 @@
             <p class="text-[11px] text-slate-500 mt-1">
                 Maktab mas’ullari dars qoldirilishi sababini tushuntirishi shart
             </p>
-        </div>
+            <span class="text-[10px] text-red-700 font-bold mt-1 inline-flex items-center gap-1 group-hover:underline">
+                <i class="fa-solid fa-arrow-right text-[9px]"></i> 35 ta holatni ko‘rish
+            </span>
+        </a>
     </div>
 
     <!-- Charts Grid: Row 1 (19 Districts Bar Chart) -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+    <div id="districtChartCard" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5 border-b pb-4">
             <div>
                 <h3 class="font-bold text-slate-800 text-base">📊 19 ta Tuman/Shahar Bo‘yicha Jinoyatlar Soni Qiyosi (2025 vs 2026)</h3>
@@ -168,7 +188,19 @@
     </div>
 
     <!-- Comparative Table of 19 Districts -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+    <div id="districtsTableCard" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <!-- Filter Indicator Banner -->
+        <div id="dynamicsFilterBanner" class="hidden bg-slate-900 text-white p-3.5 flex items-center justify-between text-xs transition border-b border-slate-700">
+            <div class="flex items-center gap-2 font-bold">
+                <i class="fa-solid fa-filter text-amber-400 text-sm"></i>
+                <span>Jadval saralash: <span id="dynamicsFilterName" class="underline text-amber-300 font-black"></span></span>
+                <span id="dynamicsFilterCount" class="text-slate-300 font-normal"></span>
+            </div>
+            <button onclick="filterDynamicsTable('all')" class="px-3 py-1 bg-white/15 hover:bg-white/25 text-white rounded-lg font-bold transition flex items-center gap-1.5 text-xs shadow-2xs">
+                <i class="fa-solid fa-xmark"></i> Barcha 19 ta hududni ko‘rsatish
+            </button>
+        </div>
+
         <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
                 <h3 class="font-bold text-slate-800 text-base">📋 19 ta Tuman/Shahar Bo‘yicha Qiyosiy Ko‘rsatkichlar Jadvali</h3>
@@ -190,14 +222,14 @@
                         <th class="py-3 px-4 text-center">2025 й. (8 ой) жиноят</th>
                         <th class="py-3 px-4 text-center">2025 й. ўқувчилар</th>
                         <th class="py-3 px-4 text-center font-bold text-indigo-900 bg-indigo-50/50">2026 й. (8 ой) жиноят</th>
-                        <th class="py-3 px-4 text-center text-indigo-900 bg-indigo-50/50">2026 й. ўқувчилар</th>
+                        <th class="py-3 px-4 text-center text-indigo-900 bg-indigo-50/50">2026 й. ўқувчиlar</th>
                         <th class="py-3 px-4 text-center font-bold">Фарқи</th>
                         <th class="py-3 px-4 text-center">Ҳолат</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     {% for d in data.district_comparisons %}
-                    <tr class="hover:bg-slate-50/80 transition">
+                    <tr class="district-stat-row hover:bg-slate-50/80 transition" data-diff="{{ d.diff }}" data-name="{{ d.district_name|lower }}">
                         <td class="py-3 px-4 font-bold text-slate-400">{{ d.tr }}</td>
                         <td class="py-3 px-4 font-bold text-slate-800 text-sm">{{ d.district_name }}</td>
                         <td class="py-3 px-4 text-center font-semibold text-slate-600">{{ d.crimes_2025 }}</td>
@@ -364,11 +396,46 @@
     // District Table Search Filter
     function filterDistrictTable() {
         const input = document.getElementById('tableSearchInput').value.toLowerCase();
-        const rows = document.querySelectorAll('#districtsTable tbody tr');
+        const rows = document.querySelectorAll('#districtsTable tbody tr.district-stat-row');
         rows.forEach(r => {
             const text = r.children[1].textContent.toLowerCase();
             r.style.display = text.includes(input) ? '' : 'none';
         });
+    }
+
+    function scrollToSection(id) {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function filterDynamicsTable(mode) {
+        const rows = document.querySelectorAll('.district-stat-row');
+        let count = 0;
+        rows.forEach(r => {
+            const diff = parseFloat(r.getAttribute('data-diff') || 0);
+            let show = true;
+            if (mode === 'kamaygan') {
+                show = (diff < 0);
+            } else if (mode === 'osgan') {
+                show = (diff > 0);
+            }
+            r.style.display = show ? '' : 'none';
+            if (show) count++;
+        });
+
+        const banner = document.getElementById('dynamicsFilterBanner');
+        const nameSpan = document.getElementById('dynamicsFilterName');
+        const cntSpan = document.getElementById('dynamicsFilterCount');
+        if (banner) {
+            if (mode === 'all') {
+                banner.classList.add('hidden');
+            } else {
+                banner.classList.remove('hidden');
+                if (nameSpan) nameSpan.textContent = mode === 'kamaygan' ? 'Kamayishga erishgan hududlar (ijobiy dinamika)' : 'Jinoyatchilik oshgan hududlar (alohida nazorat)';
+                if (cntSpan) cntSpan.textContent = `(${count} ta hudud ko‘rsatilmoqda)`;
+            }
+        }
+        scrollToSection('districtsTableCard');
     }
 </script>
 {% endblock %}

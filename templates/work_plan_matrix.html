@@ -37,47 +37,47 @@
             </div>
         </div>
 
-        <!-- 4 KPI Cards -->
+        <!-- 4 KPI Cards (Clickable Navigation) -->
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
-            <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-3.5 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+            <a href="/work-plans" title="Barcha 63 ta ish rejasi bandlariga o‘tish" class="bg-blue-50/60 border border-blue-100 rounded-xl p-3.5 flex items-center gap-3 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block group">
+                <div class="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm shadow-2xs group-hover:scale-105 transition">
                     <i class="fa-solid fa-list-check"></i>
                 </div>
                 <div>
-                    <div class="text-[11px] text-blue-700 font-semibold uppercase">Jami Bandlar</div>
+                    <div class="text-[11px] text-blue-700 font-semibold uppercase group-hover:text-blue-900 transition">Jami Bandlar</div>
                     <div class="text-lg font-bold text-slate-800">{{ matrix_data.stats.total_items }} ta</div>
                 </div>
-            </div>
+            </a>
 
-            <div class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3.5 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+            <a href="/district-assignments" title="Hududlarga yuklatilgan topshiriqlarni ko‘rish" class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3.5 flex items-center gap-3 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block group">
+                <div class="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-2xs group-hover:scale-105 transition">
                     <i class="fa-solid fa-building-flag"></i>
                 </div>
                 <div>
-                    <div class="text-[11px] text-indigo-700 font-semibold uppercase">Yuklatilgan topshiriqlar</div>
+                    <div class="text-[11px] text-indigo-700 font-semibold uppercase group-hover:text-indigo-900 transition">Yuklatilgan topshiriqlar</div>
                     <div class="text-lg font-bold text-slate-800">{{ matrix_data.stats.total_assigned }} ta</div>
                 </div>
-            </div>
+            </a>
 
-            <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-3.5 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+            <a href="/district-assignments?filter_type=submitted" title="Topshirilgan rasmiy hisobotlarni ko‘rish" class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-3.5 flex items-center gap-3 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block group">
+                <div class="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-2xs group-hover:scale-105 transition">
                     <i class="fa-solid fa-check-double"></i>
                 </div>
                 <div>
-                    <div class="text-[11px] text-emerald-700 font-semibold uppercase">Topshirilgan hisobotlar</div>
+                    <div class="text-[11px] text-emerald-700 font-semibold uppercase group-hover:text-emerald-900 transition">Topshirilgan hisobotlar</div>
                     <div class="text-lg font-bold text-slate-800">{{ matrix_data.stats.total_submitted }} ta</div>
                 </div>
-            </div>
+            </a>
 
-            <div class="bg-amber-50/60 border border-amber-100 rounded-xl p-3.5 flex items-center gap-3">
-                <div class="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-sm">
+            <a href="/ratings" title="19 ta tuman/shahar jonli reytingiga o‘tish" class="bg-amber-50/60 border border-amber-100 rounded-xl p-3.5 flex items-center gap-3 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block group">
+                <div class="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-2xs group-hover:scale-105 transition">
                     %
                 </div>
                 <div>
-                    <div class="text-[11px] text-amber-700 font-semibold uppercase">Umumiy Ijro Ko‘rsatkichi</div>
+                    <div class="text-[11px] text-amber-700 font-semibold uppercase group-hover:text-amber-900 transition">Umumiy Ijro Ko‘rsatkichi</div>
                     <div class="text-lg font-bold text-slate-800">{{ matrix_data.stats.overall_percent }}%</div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 

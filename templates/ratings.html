@@ -42,38 +42,58 @@
         </div>
     </div>
 
-    <!-- Summary KPI Cards -->
+    <!-- Summary KPI Cards (Clickable Filter Buttons) -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80">
-            <span class="text-xs text-slate-500 font-semibold block">O‘rtacha Viloyat Ko‘rsatkichi</span>
+        <div onclick="filterRatingZone('all')" 
+             title="Barcha 19 ta hudud reytingini to‘liq ko‘rish"
+             class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
+            <span class="text-xs text-slate-500 font-semibold block group-hover:text-slate-800 transition">O‘rtacha Viloyat Ko‘rsatkichi</span>
             <div class="text-2xl font-black text-slate-800 mt-1">{{ kpi.stats.avg_score }} <span class="text-xs font-bold text-slate-400">/ 100 ball</span></div>
             <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2">
                 <div class="bg-blue-600 h-1.5 rounded-full" style="width: {{ kpi.stats.avg_score }}%"></div>
             </div>
+            <span class="text-[10px] text-indigo-600 font-bold mt-1 inline-flex items-center gap-1 group-hover:underline">
+                <i class="fa-solid fa-list-ol text-[9px]"></i> Barcha 19 hudud
+            </span>
         </div>
 
-        <div class="bg-emerald-50/60 p-4 rounded-2xl shadow-sm border border-emerald-200/70">
-            <span class="text-xs text-emerald-800 font-semibold block flex items-center gap-1">
+        <div onclick="filterRatingZone('Yashil')" 
+             title="Faqat yashil (namunali) zona tumanlarini ko‘rish"
+             class="bg-emerald-50/60 p-4 rounded-2xl shadow-sm border border-emerald-200/70 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
+            <span class="text-xs text-emerald-800 font-semibold block flex items-center gap-1 group-hover:text-emerald-950 transition">
                 <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Yashil Zona (Namunali)
             </span>
             <div class="text-2xl font-black text-emerald-800 mt-1">{{ kpi.stats.green_count }} <span class="text-xs font-bold text-emerald-600">ta hudud</span></div>
             <span class="text-[11px] text-emerald-700 font-medium">80 - 100 ball oralig‘i</span>
+            <span class="text-[10px] text-emerald-800 font-bold mt-1 block group-hover:underline">
+                <i class="fa-solid fa-arrow-down text-[9px]"></i> Ro‘yxatni filtrlash
+            </span>
         </div>
 
-        <div class="bg-amber-50/60 p-4 rounded-2xl shadow-sm border border-amber-200/70">
-            <span class="text-xs text-amber-800 font-semibold block flex items-center gap-1">
+        <div onclick="filterRatingZone('Sariq')" 
+             title="Faqat sariq (o‘rta) zona tumanlarini ko‘rish"
+             class="bg-amber-50/60 p-4 rounded-2xl shadow-sm border border-amber-200/70 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
+            <span class="text-xs text-amber-800 font-semibold block flex items-center gap-1 group-hover:text-amber-950 transition">
                 <span class="w-2 h-2 rounded-full bg-amber-500 inline-block"></span> Sariq Zona (O‘rta)
             </span>
             <div class="text-2xl font-black text-amber-800 mt-1">{{ kpi.stats.yellow_count }} <span class="text-xs font-bold text-amber-600">ta hudud</span></div>
             <span class="text-[11px] text-amber-700 font-medium">60 - 79.9 ball oralig‘i</span>
+            <span class="text-[10px] text-amber-800 font-bold mt-1 block group-hover:underline">
+                <i class="fa-solid fa-arrow-down text-[9px]"></i> Ro‘yxatni filtrlash
+            </span>
         </div>
 
-        <div class="bg-red-50/60 p-4 rounded-2xl shadow-sm border border-red-200/70">
-            <span class="text-xs text-red-800 font-semibold block flex items-center gap-1">
+        <div onclick="filterRatingZone('Qizil')" 
+             title="Faqat qizil (tanqidiy) zona tumanlarini ko‘rish"
+             class="bg-red-50/60 p-4 rounded-2xl shadow-sm border border-red-200/70 cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 group">
+            <span class="text-xs text-red-800 font-semibold block flex items-center gap-1 group-hover:text-red-950 transition">
                 <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span> Qizil Zona (Tanqidiy)
             </span>
             <div class="text-2xl font-black text-red-800 mt-1">{{ kpi.stats.red_count }} <span class="text-xs font-bold text-red-600">ta hudud</span></div>
             <span class="text-[11px] text-red-700 font-medium">60 balldan past</span>
+            <span class="text-[10px] text-red-800 font-bold mt-1 block group-hover:underline">
+                <i class="fa-solid fa-arrow-down text-[9px]"></i> Ro‘yxatni filtrlash
+            </span>
         </div>
     </div>
 
@@ -145,8 +165,20 @@
         </div>
     </div>
 
+    <!-- Rating Filter Banner -->
+    <div id="ratingFilterBanner" class="hidden bg-slate-900 text-white p-3.5 rounded-2xl flex items-center justify-between text-xs transition shadow-sm border border-slate-700">
+        <div class="flex items-center gap-2 font-bold">
+            <i class="fa-solid fa-filter text-amber-400 text-sm"></i>
+            <span>Toifa bo‘yicha ko‘rsatilmoqda: <span id="ratingFilterName" class="underline text-amber-300 font-black"></span></span>
+            <span id="ratingFilterCount" class="text-slate-300 font-normal"></span>
+        </div>
+        <button onclick="filterRatingZone('all')" class="px-3 py-1 bg-white/15 hover:bg-white/25 text-white rounded-lg font-bold transition flex items-center gap-1.5 text-xs shadow-2xs">
+            <i class="fa-solid fa-xmark"></i> Barcha 19 ta hududni ko‘rsatish
+        </button>
+    </div>
+
     <!-- Complete 19 Districts Leaderboard Table -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+    <div id="ratingsTableContainer" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
         <div class="p-5 border-b border-slate-100 flex items-center justify-between">
             <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
                 <i class="fa-solid fa-list-ol text-blue-600"></i>
@@ -170,7 +202,7 @@
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-medium">
                     {% for r in kpi.ratings %}
-                    <tr class="hover:bg-slate-50/80 transition {% if r.rank <= 3 %}bg-amber-50/30{% endif %}">
+                    <tr class="rating-row hover:bg-slate-50/80 transition {% if r.rank <= 3 %}bg-amber-50/30{% endif %}" data-zone="{{ r.zone }}">
                         <td class="py-3 px-4 text-center font-bold text-sm">
                             {% if r.rank == 1 %}🥇
                             {% elif r.rank == 2 %}🥈
@@ -451,6 +483,36 @@ ${(executiveBriefingRaw.topshiriqlar || []).map((t, idx) => `${idx + 1}. ${t}`).
         } catch (err) {
             Swal.close();
             Swal.fire('Xatolik', 'Server xatosi yuz berdi', 'error');
+        }
+    }
+
+    function filterRatingZone(zone) {
+        const rows = document.querySelectorAll('.rating-row');
+        let visibleCount = 0;
+        rows.forEach(r => {
+            const rZone = r.getAttribute('data-zone') || '';
+            const show = (zone === 'all' || rZone.toLowerCase() === zone.toLowerCase());
+            r.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+
+        const banner = document.getElementById('ratingFilterBanner');
+        const nameSpan = document.getElementById('ratingFilterName');
+        const countSpan = document.getElementById('ratingFilterCount');
+
+        if (banner) {
+            if (zone === 'all') {
+                banner.classList.add('hidden');
+            } else {
+                banner.classList.remove('hidden');
+                if (nameSpan) nameSpan.textContent = zone + " ( " + (zone === 'Yashil' ? 'Namunali' : zone === 'Sariq' ? 'O‘rta' : 'Tanqidiy') + " )";
+                if (countSpan) countSpan.textContent = `(${visibleCount} ta hudud ko‘rsatilmoqda)`;
+            }
+        }
+
+        const table = document.getElementById('ratingsTableContainer');
+        if (table) {
+            table.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     }
 </script>

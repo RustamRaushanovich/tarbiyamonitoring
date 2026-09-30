@@ -45,59 +45,90 @@
         </div>
     </div>
 
-    <!-- 5 KPI Summary Cards -->
+    <!-- 5 KPI Summary Cards (Clickable Filter Buttons) -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <!-- 1. Jami -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
-            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Jami Hujjatlar</div>
+        <a href="/district-assignments?district_id={{ selected_district }}" onclick="return filterAssignments(event, '')" 
+           title="Barcha hujjatlarni ko‘rish"
+           class="bg-white p-4 rounded-2xl border {% if not selected_filter %}border-slate-400 ring-2 ring-slate-300 shadow-sm{% else %}border-slate-200/80 shadow-2xs{% endif %} cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block text-left group">
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-800 transition">Jami Hujjatlar</div>
             <div class="text-2xl font-black text-slate-900 mt-1">{{ stats.total or 0 }}</div>
             <div class="text-[10px] text-slate-400 mt-0.5">Yuborilgan vazifalar</div>
-        </div>
+        </a>
 
         <!-- 2. IIB Taqdimnomasi -->
-        <div class="bg-white p-4 rounded-2xl border border-blue-200/80 bg-blue-50/20 shadow-2xs">
-            <div class="text-[11px] font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1">
+        <a href="/district-assignments?district_id={{ selected_district }}&filter_type=iib" onclick="return filterAssignments(event, 'iib')" 
+           title="Faqat IIB taqdimnomalarini filtrlash"
+           class="bg-white p-4 rounded-2xl border {% if selected_filter == 'iib' %}border-blue-500 ring-2 ring-blue-300 shadow-sm{% else %}border-blue-200/80{% endif %} bg-blue-50/20 shadow-2xs cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block text-left group">
+            <div class="text-[11px] font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1 group-hover:text-blue-900 transition">
                 <i class="fa-solid fa-shield-halved text-xs"></i> IIB Taqdimnoma
             </div>
             <div class="text-2xl font-black text-blue-900 mt-1">{{ stats.iib_count or 0 }}</div>
             <div class="text-[10px] text-blue-600/70 mt-0.5">Ichki ishlar organi</div>
-        </div>
+        </a>
 
         <!-- 3. Fuqaro murojaati -->
-        <div class="bg-white p-4 rounded-2xl border border-emerald-200/80 bg-emerald-50/20 shadow-2xs">
-            <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+        <a href="/district-assignments?district_id={{ selected_district }}&filter_type=murojaat" onclick="return filterAssignments(event, 'murojaat')" 
+           title="Faqat fuqaro murojaatlarini filtrlash"
+           class="bg-white p-4 rounded-2xl border {% if selected_filter == 'murojaat' %}border-emerald-500 ring-2 ring-emerald-300 shadow-sm{% else %}border-emerald-200/80{% endif %} bg-emerald-50/20 shadow-2xs cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block text-left group">
+            <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1 group-hover:text-emerald-900 transition">
                 <i class="fa-solid fa-user-pen text-xs"></i> Fuqaro Murojaati
             </div>
             <div class="text-2xl font-black text-emerald-900 mt-1">{{ stats.murojaat_count or 0 }}</div>
             <div class="text-[10px] text-emerald-600/70 mt-0.5">Ariza va shikoyatlar</div>
-        </div>
+        </a>
 
         <!-- 4. Boshqarma topshirig'i -->
-        <div class="bg-white p-4 rounded-2xl border border-purple-200/80 bg-purple-50/20 shadow-2xs">
-            <div class="text-[11px] font-bold text-purple-700 uppercase tracking-wider flex items-center gap-1">
+        <a href="/district-assignments?district_id={{ selected_district }}&filter_type=topshiriq" onclick="return filterAssignments(event, 'topshiriq')" 
+           title="Boshqarma xatlari va ichki topshiriqlarni filtrlash"
+           class="bg-white p-4 rounded-2xl border {% if selected_filter == 'topshiriq' %}border-purple-500 ring-2 ring-purple-300 shadow-sm{% else %}border-purple-200/80{% endif %} bg-purple-50/20 shadow-2xs cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block text-left group">
+            <div class="text-[11px] font-bold text-purple-700 uppercase tracking-wider flex items-center gap-1 group-hover:text-purple-900 transition">
                 <i class="fa-solid fa-file-signature text-xs"></i> Boshqarma Xati
             </div>
             <div class="text-2xl font-black text-purple-900 mt-1">{{ stats.topshiriq_count or 0 }}</div>
             <div class="text-[10px] text-purple-600/70 mt-0.5">Ichki ish reja/topshiriq</div>
-        </div>
+        </a>
 
         <!-- 5. Javob topshirilgan -->
-        <div class="bg-white p-4 rounded-2xl border border-teal-200/80 bg-teal-50/20 shadow-2xs">
-            <div class="text-[11px] font-bold text-teal-700 uppercase tracking-wider flex items-center gap-1">
+        <a href="/district-assignments?district_id={{ selected_district }}&filter_type=submitted" onclick="return filterAssignments(event, 'submitted')" 
+           title="Javob xati topshirilgan hujjatlarni filtrlash"
+           class="bg-white p-4 rounded-2xl border {% if selected_filter == 'submitted' %}border-teal-500 ring-2 ring-teal-300 shadow-sm{% else %}border-teal-200/80{% endif %} bg-teal-50/20 shadow-2xs cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block text-left group">
+            <div class="text-[11px] font-bold text-teal-700 uppercase tracking-wider flex items-center gap-1 group-hover:text-teal-900 transition">
                 <i class="fa-solid fa-circle-check text-xs"></i> Javob Berilgan
             </div>
             <div class="text-2xl font-black text-teal-900 mt-1">{{ stats.submitted_count or 0 }}</div>
             <div class="text-[10px] text-teal-600/70 mt-0.5">Rasmiy xat topshirildi</div>
-        </div>
+        </a>
 
         <!-- 6. Kutilmoqda -->
-        <div class="bg-white p-4 rounded-2xl border border-amber-200/80 bg-amber-50/20 shadow-2xs">
-            <div class="text-[11px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1">
+        <a href="/district-assignments?district_id={{ selected_district }}&filter_type=pending" onclick="return filterAssignments(event, 'pending')" 
+           title="Ijroda / kutilayotgan hujjatlarni filtrlash"
+           class="bg-white p-4 rounded-2xl border {% if selected_filter == 'pending' %}border-amber-500 ring-2 ring-amber-300 shadow-sm{% else %}border-amber-200/80{% endif %} bg-amber-50/20 shadow-2xs cursor-pointer hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block text-left group">
+            <div class="text-[11px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1 group-hover:text-amber-900 transition">
                 <i class="fa-solid fa-clock text-xs"></i> Ijroda / Kutilmoqda
             </div>
             <div class="text-2xl font-black text-amber-900 mt-1">{{ stats.pending_count or 0 }}</div>
             <div class="text-[10px] text-amber-600/70 mt-0.5">Muddati o‘tmagan</div>
+        </a>
+    </div>
+
+    <!-- Active Filter Indicator Banner -->
+    <div id="filterBanner" class="{% if not selected_filter %}hidden{% endif %} bg-indigo-50/90 border border-indigo-200 p-3 rounded-2xl flex items-center justify-between text-xs transition">
+        <div class="flex items-center gap-2 text-indigo-900 font-bold">
+            <i class="fa-solid fa-filter text-indigo-600"></i>
+            <span>Faol saralash: <span id="filterLabelName" class="underline">
+                {% if selected_filter == 'iib' %}IIB Taqdimnomalari
+                {% elif selected_filter == 'murojaat' %}Fuqaro Murojaatlari
+                {% elif selected_filter == 'topshiriq' %}Boshqarma Xatlari & Topshiriqlar
+                {% elif selected_filter == 'submitted' %}Javob Berilgan Hujjatlar
+                {% elif selected_filter == 'pending' %}Ijroda / Kutilayotgan Hujjatlar
+                {% else %}Barcha Hujjatlar{% endif %}
+            </span></span>
+            <span id="filteredRowCount" class="text-slate-500 font-medium">({{ assignments|length }} ta ko‘rsatilmoqda)</span>
         </div>
+        <button onclick="clearAssignmentFilter()" class="px-2.5 py-1 bg-white hover:bg-indigo-100 text-indigo-700 rounded-lg font-bold border border-indigo-200 transition flex items-center gap-1 shadow-2xs">
+            <i class="fa-solid fa-xmark"></i> Barcha hujjatlarni ko‘rish (tozalash)
+        </button>
     </div>
 
     <!-- Assignments Main Table -->
@@ -116,9 +147,9 @@
                         <th class="py-3.5 px-4 w-36 text-center">Harakatlar</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody class="divide-y divide-slate-100" id="assignmentsTableBody">
                     {% for a in assignments %}
-                    <tr class="hover:bg-slate-50/80 transition group">
+                    <tr class="assignment-row hover:bg-slate-50/80 transition group" data-doc-type="{{ a.doc_type }}" data-status="{{ a.status }}">
                         <td class="py-3.5 px-4 text-center font-bold text-slate-400">{{ loop.index }}</td>
 
                         <!-- Hujjat turi va birlamchi fayl -->
@@ -272,9 +303,21 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="8" class="py-12 text-center text-slate-400 italic">
-                            <i class="fa-regular fa-folder-open text-3xl mb-2 block text-slate-300"></i>
-                            Hozirda yuklatilgan hududiy topshiriqlar mavjud emas.
+                        <td colspan="8" class="py-16 text-center text-slate-400">
+                            <div class="max-w-md mx-auto space-y-3">
+                                <div class="w-16 h-16 mx-auto rounded-3xl bg-indigo-50 text-indigo-500 flex items-center justify-center text-2xl shadow-inner border border-indigo-100">
+                                    <i class="fa-solid fa-folder-open"></i>
+                                </div>
+                                <h4 class="text-sm sm:text-base font-bold text-slate-800">Hozircha topshiriq va taqdimnomalar mavjud emas</h4>
+                                <p class="text-xs text-slate-500 leading-relaxed">
+                                    Ushbu bo‘lim bo‘sh. Boshqarma tomonidan yangi topshiriq, IIB taqdimnomasi yoki fuqaro murojaati yuborilganda bu yerda avtomatik aks etadi.
+                                </p>
+                                {% if current_user.role in ['admin', 'regional_head', 'curator'] %}
+                                <button onclick="openCreateAssignmentModal()" class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition shadow-sm cursor-pointer">
+                                    <i class="fa-solid fa-plus-circle"></i> Yangi Topshiriq / Taqdimnoma Yuborish
+                                </button>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -731,6 +774,64 @@
         } catch(e) {
             alert("Xatolik: " + e.message);
         }
+    }
+
+    function filterAssignments(e, type) {
+        if (e) e.preventDefault();
+        const rows = document.querySelectorAll('.assignment-row');
+        let visibleCount = 0;
+        
+        rows.forEach(r => {
+            const dt = r.getAttribute('data-doc-type') || '';
+            const st = r.getAttribute('data-status') || '';
+            let show = true;
+            if (type === 'iib') {
+                show = (dt === 'IIB taqdimnomasi');
+            } else if (type === 'murojaat') {
+                show = (dt === 'Fuqaro murojaati');
+            } else if (type === 'topshiriq') {
+                show = (dt !== 'IIB taqdimnomasi' && dt !== 'Fuqaro murojaati');
+            } else if (type === 'submitted') {
+                show = (st === 'Hisobot topshirildi' || st === 'Tasdiqlandi');
+            } else if (type === 'pending') {
+                show = (st === 'Yangi' || st === 'Kutilmoqda');
+            }
+            r.style.display = show ? '' : 'none';
+            if (show) visibleCount++;
+        });
+
+        const banner = document.getElementById('filterBanner');
+        const label = document.getElementById('filterLabelName');
+        const cnt = document.getElementById('filteredRowCount');
+        if (banner) {
+            if (!type) {
+                banner.classList.add('hidden');
+            } else {
+                banner.classList.remove('hidden');
+                const names = {
+                    'iib': 'IIB Taqdimnomalari',
+                    'murojaat': 'Fuqaro Murojaatlari',
+                    'topshiriq': 'Boshqarma Xatlari & Topshiriqlar',
+                    'submitted': 'Javob Berilgan Hujjatlar',
+                    'pending': 'Ijroda / Kutilayotgan Hujjatlar'
+                };
+                if (label) label.textContent = names[type] || type;
+                if (cnt) cnt.textContent = `(${visibleCount} ta ko‘rsatilmoqda)`;
+            }
+        }
+
+        const url = new URL(window.location);
+        if (type) {
+            url.searchParams.set('filter_type', type);
+        } else {
+            url.searchParams.delete('filter_type');
+        }
+        window.history.pushState({}, '', url);
+        return false;
+    }
+
+    function clearAssignmentFilter() {
+        filterAssignments(null, '');
     }
 </script>
 {% endblock %}

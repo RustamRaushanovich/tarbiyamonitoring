@@ -30,18 +30,18 @@
             <span class="text-[11px] text-slate-400">12 oylik kalendar tsikli</span>
         </div>
 
-        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 text-center text-xs">
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-12 gap-2 text-center text-xs">
             {% for m in months %}
             <a href="/reports?month={{ m.num }}&year={{ selected_year }}" 
-               class="p-2.5 rounded-xl border transition flex flex-col items-center justify-center gap-1
+               class="p-2 sm:p-2.5 rounded-xl border transition flex flex-col items-center justify-center gap-1 min-h-[58px]
                {% if m.is_selected %}bg-blue-600 text-white font-bold border-blue-700 shadow-md ring-2 ring-blue-300
                {% else %}bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:border-blue-300{% endif %}">
                 <span class="text-xs font-semibold">{{ m.name }}</span>
-                <span class="text-[9px] px-1.5 py-0.2 rounded-full 
-                    {% if m.is_selected %}bg-white/20 text-white
-                    {% elif m.status_badge == 'Yakunlangan' %}bg-emerald-100 text-emerald-700
-                    {% elif m.status_badge == 'Faol' %}bg-amber-100 text-amber-700 animate-pulse
-                    {% else %}bg-slate-200 text-slate-500{% endif %}">
+                <span class="text-[9px] px-1.5 py-0.5 rounded-full whitespace-nowrap
+                    {% if m.is_selected %}bg-white/20 text-white font-bold
+                    {% elif m.status_badge == 'Yakunlangan' %}bg-emerald-100 text-emerald-800 font-semibold
+                    {% elif m.status_badge == 'Faol' %}bg-amber-100 text-amber-800 font-bold animate-pulse
+                    {% else %}bg-slate-200/80 text-slate-500{% endif %}">
                     {{ m.status_badge }}
                 </span>
             </a>
