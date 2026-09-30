@@ -152,51 +152,115 @@
             <table class="w-full text-left text-xs border-collapse">
                 <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
                     <tr>
-                        <th class="py-3 px-4">№</th>
-                        <th class="py-3 px-4">Topshiriq Mazmuni</th>
-                        <th class="py-3 px-4">Muddat</th>
-                        <th class="py-3 px-4">Holat</th>
-                        <th class="py-3 px-4">Yuklangan Dalillar</th>
-                        <th class="py-3 px-4 text-center">Harakat</th>
+                        <th class="py-3 px-4 w-10 text-center">№</th>
+                        <th class="py-3 px-4 w-44">Hujjat Turi & Rekvizitlari</th>
+                        <th class="py-3 px-4">Topshiriq / Murojaat Mazmuni</th>
+                        <th class="py-3 px-4 w-32">Ijro Muddati</th>
+                        <th class="py-3 px-4 w-28 text-center">Holat</th>
+                        <th class="py-3 px-4 w-48">Javob Xati & Asoslari</th>
+                        <th class="py-3 px-4 w-32 text-center">Harakat</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
                     {% for a in assignments %}
                     <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3 px-4 font-bold text-slate-500">{{ loop.index }}</td>
+                        <td class="py-3 px-4 text-center font-bold text-slate-400">{{ loop.index }}</td>
+
+                        <!-- Hujjat turi & Birlamchi fayl -->
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold
+                                {% if a.doc_type == 'IIB taqdimnomasi' %}bg-blue-100 text-blue-800
+                                {% elif a.doc_type == 'Fuqaro murojaati' %}bg-emerald-100 text-emerald-800
+                                {% elif a.doc_type in ['Prokuratura taqdimnomasi', 'Prokuratura protesti'] %}bg-purple-100 text-purple-800
+                                {% else %}bg-amber-100 text-amber-800{% endif %}">
+                                {% if a.doc_type == 'IIB taqdimnomasi' %}<i class="fa-solid fa-shield-halved text-[9px]"></i>
+                                {% elif a.doc_type == 'Fuqaro murojaati' %}<i class="fa-solid fa-user-pen text-[9px]"></i>
+                                {% else %}<i class="fa-solid fa-file-lines text-[9px]"></i>{% endif %}
+                                {{ a.doc_type or 'Topshiriq' }}
+                            </span>
+                            {% if a.doc_number or a.doc_date %}
+                            <div class="text-[11px] font-semibold text-slate-700 mt-1">
+                                {{ a.doc_number or '№ -' }} <span class="text-slate-400 font-normal">({{ a.doc_date or '-' }})</span>
+                            </div>
+                            {% endif %}
+                            {% if a.attachment_path %}
+                            <a href="{{ a.attachment_path }}" target="_blank" 
+                               class="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 underline bg-indigo-50 px-2 py-0.5 rounded mt-1">
+                                <i class="fa-solid fa-file-pdf text-red-500"></i> Hujjat ilovasi (PDF)
+                            </a>
+                            {% endif %}
+                        </td>
+
+                        <!-- Mazmuni -->
                         <td class="py-3 px-4 max-w-md">
                             <div class="font-bold text-slate-900">{{ a.assignment_title }}</div>
-                            <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{{ a.assignment_description }}</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{{ a.assignment_instructions or a.assignment_description or '-' }}</div>
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap font-medium text-slate-600">
-                            <i class="fa-regular fa-calendar text-[10px] text-slate-400 mr-1"></i>
-                            {{ a.deadline_date or 'Belgilanmagan' }}
+
+                        <!-- Muddat & Priority -->
+                        <td class="py-3 px-4 whitespace-nowrap font-medium text-slate-700">
+                            <div class="flex items-center gap-1">
+                                <i class="fa-regular fa-calendar text-[10px] text-slate-400"></i>
+                                <span>{{ a.deadline_date or 'Belgilanmagan' }}</span>
+                            </div>
+                            {% if a.priority %}
+                            <span class="inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold
+                                {% if a.priority == 'Shoshilinch' %}bg-red-100 text-red-700 animate-pulse
+                                {% elif a.priority == 'Muhim' %}bg-amber-100 text-amber-700
+                                {% else %}bg-slate-100 text-slate-600{% endif %}">
+                                {{ a.priority }}
+                            </span>
+                            {% endif %}
                         </td>
-                        <td class="py-3 px-4 whitespace-nowrap">
+
+                        <!-- Holat -->
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
                             <span class="px-2.5 py-1 rounded-full text-[11px] font-bold
-                                {% if a.status == 'Bajarildi' %}bg-emerald-100 text-emerald-700
-                                {% elif a.status == 'Kutilmoqda' %}bg-amber-100 text-amber-800
-                                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                {% if a.status == 'Hisobot topshirildi' %}bg-emerald-100 text-emerald-800
+                                {% elif a.status == 'Tasdiqlandi' %}bg-blue-100 text-blue-800
+                                {% elif a.status == 'Qaytarildi' %}bg-rose-100 text-rose-800
+                                {% else %}bg-amber-100 text-amber-800{% endif %}">
                                 {{ a.status }}
                             </span>
                         </td>
-                        <td class="py-3 px-4 font-semibold text-slate-600 whitespace-nowrap">
-                            <span class="inline-flex items-center gap-1">
-                                <i class="fa-solid fa-paperclip text-slate-400"></i>
-                                {{ a.proof_count or 0 }} ta fayl
-                            </span>
+
+                        <!-- Javob xati & Asoslari -->
+                        <td class="py-3 px-4">
+                            {% if a.proof_id or a.status in ['Hisobot topshirildi', 'Tasdiqlandi'] %}
+                            <div class="space-y-1">
+                                {% if a.response_letter_number %}
+                                <div class="text-[11px] font-bold text-slate-800">№ {{ a.response_letter_number }} ({{ a.response_letter_date or '' }})</div>
+                                {% endif %}
+                                <div class="flex flex-wrap gap-1 items-center">
+                                    {% if a.response_letter_path %}
+                                    <a href="{{ a.response_letter_path }}" target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold hover:bg-emerald-100">
+                                        <i class="fa-solid fa-file-pdf text-red-500"></i> Javob xati
+                                    </a>
+                                    {% endif %}
+                                    {% if a.basis_list and a.basis_list | length > 0 %}
+                                    <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold">
+                                        <i class="fa-solid fa-paperclip"></i> {{ a.basis_list | length }} ta asos
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="text-slate-400 italic text-[11px]">Hali topshirilmagan</span>
+                            {% endif %}
                         </td>
+
+                        <!-- Harakat -->
                         <td class="py-3 px-4 text-center whitespace-nowrap">
-                            <button onclick="openUploadModal({{ a.id }}, '{{ a.assignment_title | escape }}')" 
-                                    class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[11px] border border-blue-200 transition shadow-2xs flex items-center gap-1.5 mx-auto">
-                                <i class="fa-solid fa-cloud-arrow-up"></i>
-                                Hisobot yuklash
+                            <button onclick="openUploadModal({{ a.id }}, '{{ a.assignment_title | escape }}', '{{ a.doc_type or '' }}', '{{ a.doc_number or '' }}')" 
+                                    class="px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[11px] border border-blue-200 transition shadow-2xs flex items-center gap-1.5 mx-auto">
+                                <i class="fa-solid fa-envelope-open-text text-blue-600"></i>
+                                Javob xati yuklash
                             </button>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="py-8 text-center text-slate-400 italic">
+                        <td colspan="7" class="py-8 text-center text-slate-400 italic">
                             Hozircha biriktirilgan faol topshiriqlar mavjud emas.
                         </td>
                     </tr>
@@ -263,53 +327,76 @@
     </div>
 </div>
 
-<!-- ==================== UPLOAD REPORT MODAL ==================== -->
-<div id="proofUploadModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden">
+<!-- ==================== UPLOAD OFFICIAL RESPONSE LETTER MODAL ==================== -->
+<div id="proofUploadModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden my-8">
         <div class="gradient-header text-white px-6 py-4 flex items-center justify-between">
             <h3 class="text-base font-bold flex items-center gap-2">
-                <i class="fa-solid fa-cloud-arrow-up"></i>
-                Hisobot fayli va dalillarni yuklash
+                <i class="fa-solid fa-envelope-open-text text-yellow-300"></i>
+                Rasmiy Javob Xati va Asoslarini Yuklash
             </h3>
             <button onclick="closeUploadModal()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
         </div>
 
-        <form id="proofUploadForm" onsubmit="handleProofUpload(event)" class="p-6 space-y-4">
-            <input type="hidden" id="uploadAssignmentId" value="">
+        <form id="proofUploadForm" onsubmit="handleProofUpload(event)" class="p-6 space-y-3.5 text-xs" enctype="multipart/form-data">
+            <input type="hidden" id="uploadAssignmentId" name="assignment_id" value="">
 
-            <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Topshiriq</label>
-                <div id="uploadAssignmentTitle" class="text-xs font-semibold text-slate-800 p-2.5 bg-slate-50 rounded-lg border border-slate-200"></div>
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Topshiriq:</div>
+                <div id="uploadAssignmentTitle" class="font-bold text-slate-900"></div>
+                <div id="uploadAssignmentDocMeta" class="text-[11px] text-indigo-600 font-semibold"></div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Bajarilish holati</label>
-                <select id="uploadStatus" class="w-full text-xs font-semibold px-3 py-2 rounded-lg border border-slate-300 bg-white">
-                    <option value="Bajarildi">Bajarildi</option>
-                    <option value="Jarayonda">Jarayonda</option>
-                    <option value="Kutilmoqda">Kutilmoqda</option>
-                </select>
+            <!-- Javob xati rekvizitlari -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Javob xati raqami:</label>
+                    <input type="text" id="uploadResponseNumber" name="response_number" required placeholder="Masalan: № 01-14/89" class="w-full p-2.5 border border-slate-200 rounded-xl font-semibold text-slate-800">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Javob xati sanasi:</label>
+                    <input type="date" id="uploadResponseDate" name="response_date" required class="w-full p-2.5 border border-slate-200 rounded-xl font-semibold text-slate-800">
+                </div>
             </div>
 
+            <!-- Mazmuni / xulosasi -->
             <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Fayllarni tanlang (Bir nechta tanlash mumkin)</label>
-                <input type="file" id="proofFiles" multiple required
-                       class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-                <p class="text-[11px] text-slate-400 mt-1 italic">* Yuklangan fayllar avtomatik tarzda kompyuteringizdagi tegishli papkaga joylanadi</p>
+                <label class="block font-bold text-slate-700 mb-1">Bajarilgan ishlar / chora-tadbirlar mazmuni:</label>
+                <textarea id="uploadComment" name="proof_text" rows="3" required placeholder="Taqdimnoma/murojaat yuzasidan o‘rganish natijalari va ko‘rilgan choralar..." 
+                          class="w-full p-2.5 rounded-xl border border-slate-200 text-slate-800 leading-relaxed"></textarea>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Qisqacha izoh / tushuntirish</label>
-                <textarea id="uploadComment" rows="2" placeholder="Topshiriq ijrosi haqida qisqacha ma’lumot..." 
-                          class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            <!-- 1. Rasmiy javob xati PDF -->
+            <div class="p-3 bg-emerald-50/60 rounded-xl border border-emerald-200">
+                <label class="block font-bold text-emerald-950 mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-pdf text-red-500"></i>
+                    Rasmiy Javob Xati (PDF / Word):
+                </label>
+                <input type="file" id="responseLetterFile" name="response_file" required accept=".pdf,.doc,.docx,.jpg,.png"
+                       class="w-full p-2 bg-white border border-emerald-200 rounded-lg text-slate-700 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-800">
+                <p class="text-[10px] text-emerald-700 mt-1">Rahbar imzolagan va muhrlangan rasmiy javob xati skaneri.</p>
             </div>
 
-            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                <button type="button" onclick="closeUploadModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+            <!-- 2. Asoslovchi ilovalar -->
+            <div class="p-3 bg-indigo-50/40 rounded-xl border border-indigo-200">
+                <label class="block font-bold text-indigo-950 mb-1 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-paperclip text-indigo-600"></i>
+                        Asoslovchi qo‘shimcha hujjatlar (Ilovalar):
+                    </span>
+                    <span class="text-[10px] text-indigo-500 font-normal">Bir nechta</span>
+                </label>
+                <input type="file" id="basisFiles" name="basis_files" multiple
+                       class="w-full p-2 bg-white border border-indigo-200 rounded-lg text-slate-700 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-xs file:font-bold file:bg-indigo-100 file:text-indigo-800">
+                <p class="text-[10px] text-indigo-600 mt-1">Bayonnomalar, tushuntirish xatlari, fotosuratlar va h.k.</p>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeUploadModal()" class="px-4 py-2.5 rounded-xl font-bold text-slate-600 hover:bg-slate-100 transition">
                     Bekor qilish
                 </button>
-                <button type="submit" id="uploadSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm flex items-center gap-1.5">
-                    <i class="fa-solid fa-upload"></i> Fayllarni saqlash
+                <button type="submit" id="uploadSubmitBtn" class="px-5 py-2.5 rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition shadow-md shadow-emerald-600/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-check text-xs"></i> Javob Xatini Saqlash
                 </button>
             </div>
         </form>
@@ -368,9 +455,13 @@
         }
     }
 
-    function openUploadModal(assignmentId, title) {
+    function openUploadModal(assignmentId, title, docType, docNumber) {
         document.getElementById('uploadAssignmentId').value = assignmentId;
         document.getElementById('uploadAssignmentTitle').innerText = title;
+        document.getElementById('uploadAssignmentDocMeta').innerText = (docType ? docType + ' ' : '') + (docNumber ? '№ ' + docNumber : '');
+        // default date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('uploadResponseDate').value = today;
         document.getElementById('proofUploadModal').classList.remove('hidden');
     }
     function closeUploadModal() {
@@ -379,33 +470,18 @@
 
     async function handleProofUpload(e) {
         e.preventDefault();
-        const aid = document.getElementById('uploadAssignmentId').value;
-        const status = document.getElementById('uploadStatus').value;
-        const comment = document.getElementById('uploadComment').value;
-        const filesInput = document.getElementById('proofFiles');
-
-        if (!filesInput.files || filesInput.files.length === 0) {
-            Swal.fire('Diqqat', 'Kamida bitta hisobot faylini tanlang', 'warning');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('assignment_id', aid);
-        formData.append('status', status);
-        formData.append('comment', comment);
-        for (let i = 0; i < filesInput.files.length; i++) {
-            formData.append('files', filesInput.files[i]);
-        }
+        const form = document.getElementById('proofUploadForm');
+        const formData = new FormData(form);
 
         Swal.fire({
-            title: 'Fayllar yuklanmoqda...',
-            text: 'Fayllar kompyuter papkasiga saqlanmoqda',
+            title: 'Javob xati saqlanmoqda...',
+            text: 'Fayllar kompyuter bazasiga yuklanmoqda',
             allowOutsideClick: false,
             didOpen: () => Swal.showLoading()
         });
 
         try {
-            const res = await fetch('/api/assignments/upload-proof', {
+            const res = await fetch('/api/district-assignments/submit-response', {
                 method: 'POST',
                 body: formData
             });
@@ -414,7 +490,7 @@
 
             if (data.status === 'success') {
                 Swal.fire({
-                    title: 'Muvaffaqiyatli yuklandi!',
+                    title: 'Javob xati qabul qilindi!',
                     text: data.message,
                     icon: 'success',
                     timer: 1800,
@@ -427,7 +503,7 @@
             }
         } catch (err) {
             Swal.close();
-            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik', 'error');
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik: ' + err.message, 'error');
         }
     }
 </script>

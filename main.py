@@ -41,11 +41,13 @@ from app.services.ai_service import (
     evaluate_district_report_ai
 )
 from app.parsers.cache_15_talik_exact import reload_15_talik_from_file
+from datetime import datetime
 from app.services.storage_service import (
     save_uploaded_files_and_passport,
     get_assignment_storage_path,
     open_folder_in_windows_explorer,
-    BASE_STORAGE_DIR
+    BASE_STORAGE_DIR,
+    sanitize_filename
 )
 from app.services.plan_analytics import (
     get_work_plan_matrix,
@@ -217,14 +219,38 @@ async def district_portal_page(request: Request):
 
     cursor.execute("""
     SELECT a.*, d.name as district_name, u.fio as assigned_by_fio,
+           p.id as proof_id, p.proof_text, p.response_letter_number, p.response_letter_date,
+           p.response_letter_path, p.basis_attachments, p.attachment_paths, p.approval_status as proof_status,
+           p.rejection_reason, p.submitted_at as proof_submitted_at,
            (SELECT COUNT(*) FROM execution_proofs WHERE target_type = 'task_district_assignment' AND target_id = a.id) as proof_count
     FROM task_district_assignments a
     JOIN districts d ON a.district_id = d.id
     LEFT JOIN users u ON a.assigned_by_user_id = u.id
+    LEFT JOIN (
+        SELECT ep.*
+        FROM execution_proofs ep
+        INNER JOIN (
+            SELECT target_id, MAX(id) as max_id
+            FROM execution_proofs
+            WHERE target_type = 'task_district_assignment'
+            GROUP BY target_id
+        ) latest ON ep.id = latest.max_id
+    ) p ON p.target_id = a.id
     WHERE a.district_id = ?
     ORDER BY a.id DESC
     """, (dist_id,))
-    assignments = cursor.fetchall()
+    assignments_raw = cursor.fetchall()
+    assignments = []
+    for a in assignments_raw:
+        item = dict(a)
+        basis_list = []
+        if item.get("basis_attachments"):
+            try:
+                basis_list = json.loads(item["basis_attachments"])
+            except Exception:
+                basis_list = []
+        item["basis_list"] = basis_list
+        assignments.append(item)
 
     cursor.execute("""
     SELECT i.*, a.school_responsible_fio, a.inspector_fio, a.current_study_status
@@ -442,10 +468,23 @@ async def district_assignments_page(request: Request, district_id: int = 0):
 
     query = """
     SELECT a.*, d.name as district_name, u.fio as assigned_by_fio,
+           p.id as proof_id, p.proof_text, p.response_letter_number, p.response_letter_date,
+           p.response_letter_path, p.basis_attachments, p.attachment_paths, p.approval_status as proof_status,
+           p.rejection_reason, p.submitted_at as proof_submitted_at, p.submitted_by_fio as proof_submitted_by,
            (SELECT COUNT(*) FROM execution_proofs WHERE target_type = 'task_district_assignment' AND target_id = a.id) as proof_count
     FROM task_district_assignments a
     JOIN districts d ON a.district_id = d.id
     LEFT JOIN users u ON a.assigned_by_user_id = u.id
+    LEFT JOIN (
+        SELECT ep.*
+        FROM execution_proofs ep
+        INNER JOIN (
+            SELECT target_id, MAX(id) as max_id
+            FROM execution_proofs
+            WHERE target_type = 'task_district_assignment'
+            GROUP BY target_id
+        ) latest ON ep.id = latest.max_id
+    ) p ON p.target_id = a.id
     WHERE 1=1
     """
     params = []
@@ -455,17 +494,48 @@ async def district_assignments_page(request: Request, district_id: int = 0):
 
     query += " ORDER BY a.id DESC"
     cursor.execute(query, params)
-    assignments = cursor.fetchall()
+    assignments_raw = cursor.fetchall()
+    assignments = []
+    for a in assignments_raw:
+        item = dict(a)
+        basis_list = []
+        if item.get("basis_attachments"):
+            try:
+                basis_list = json.loads(item["basis_attachments"])
+            except Exception:
+                basis_list = []
+        item["basis_list"] = basis_list
+        assignments.append(item)
 
     cursor.execute("SELECT id, name FROM districts ORDER BY sort_order")
     districts = cursor.fetchall()
+
+    stats_query = """
+    SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN doc_type = 'IIB taqdimnomasi' THEN 1 ELSE 0 END) as iib_count,
+        SUM(CASE WHEN doc_type = 'Fuqaro murojaati' THEN 1 ELSE 0 END) as murojaat_count,
+        SUM(CASE WHEN doc_type NOT IN ('IIB taqdimnomasi', 'Fuqaro murojaati') THEN 1 ELSE 0 END) as topshiriq_count,
+        SUM(CASE WHEN status IN ('Hisobot topshirildi', 'Tasdiqlandi') THEN 1 ELSE 0 END) as submitted_count,
+        SUM(CASE WHEN status = 'Tasdiqlandi' THEN 1 ELSE 0 END) as approved_count,
+        SUM(CASE WHEN status = 'Qaytarildi' THEN 1 ELSE 0 END) as returned_count,
+        SUM(CASE WHEN status IN ('Yangi', 'Kutilmoqda') THEN 1 ELSE 0 END) as pending_count
+    FROM task_district_assignments
+    """
+    if district_id > 0:
+        stats_query += " WHERE district_id = ?"
+        cursor.execute(stats_query, [district_id])
+    else:
+        cursor.execute(stats_query)
+    stats = cursor.fetchone()
 
     conn.close()
     return templates.TemplateResponse(request=request, name="district_assignments.html", context={
         "current_user": user,
         "assignments": assignments,
         "districts": districts,
-        "selected_district": district_id
+        "selected_district": district_id,
+        "stats": stats or {}
     })
 
 @app.get("/monthly-15", response_class=HTMLResponse)
@@ -1235,41 +1305,186 @@ async def assign_territory(
         "message": f"{count} ta hududga ({assigned_msg}) o‘rganish vazifasi muvaffaqiyatli biriktirildi!"
     })
 
-@app.post("/api/district-assignments/submit-proof")
-async def submit_proof(
-    assignment_id: int = Form(...),
-    proof_text: str = Form(...),
-    proof_file: UploadFile = File(None),
-    proof_files: List[UploadFile] = File(None)
+# ==================== HUDUDLARGA TOPSHIRIQ / TAQDIMNOMA / MUROJAAT YUBORISH ====================
+@app.post("/api/admin/create-district-assignment")
+async def create_district_assignment(
+    request: Request,
+    doc_type: str = Form("Topshiriq"),
+    doc_number: str = Form(""),
+    doc_date: str = Form(""),
+    priority: str = Form("Oddiy"),
+    assignment_title: str = Form(...),
+    assignment_instructions: str = Form(""),
+    deadline_date: str = Form(""),
+    district_ids: str = Form("all"),
+    attachment_file: UploadFile = File(None)
 ):
-    all_files = []
+    user = get_current_user(request)
+    if not user:
+        raise HTTPException(status_code=401, detail="Tizimga kirilmagan")
+    if user.get("role") not in ["admin", "regional_head", "curator"]:
+        raise HTTPException(status_code=403, detail="Vazifa biriktirish huquqi faqat boshqarma ma’murlariga berilgan")
+
+    attachment_path = None
+    if attachment_file and getattr(attachment_file, 'filename', None) and attachment_file.filename.strip():
+        now_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        safe_orig = sanitize_filename(os.path.basename(attachment_file.filename))
+        saved_filename = f"{now_ts}_{safe_orig}"
+        tasks_dir = os.path.join(STATIC_DIR, "uploads", "tasks")
+        os.makedirs(tasks_dir, exist_ok=True)
+        dest_full = os.path.join(tasks_dir, saved_filename)
+        with open(dest_full, "wb") as bf:
+            shutil.copyfileobj(attachment_file.file, bf)
+        attachment_path = f"/static/uploads/tasks/{saved_filename}"
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    if district_ids == "all" or not district_ids.strip():
+        cursor.execute("SELECT id, name FROM districts ORDER BY sort_order")
+        target_districts = cursor.fetchall()
+        assigned_msg = "Barcha 19 ta tuman va shaharga"
+    else:
+        ids = [int(x.strip()) for x in district_ids.split(",") if x.strip().isdigit()]
+        if not ids:
+            cursor.execute("SELECT id, name FROM districts ORDER BY sort_order")
+            target_districts = cursor.fetchall()
+            assigned_msg = "Barcha 19 ta tuman va shaharga"
+        else:
+            placeholders = ",".join(["?"] * len(ids))
+            cursor.execute(f"SELECT id, name FROM districts WHERE id IN ({placeholders})", ids)
+            target_districts = cursor.fetchall()
+            assigned_msg = ", ".join([d['name'] for d in target_districts])
+
+    user_id = user.get("id", 1)
+    user_fio = user.get("fio", "Boshqarma mas’uli")
+    count = 0
+    for d in target_districts:
+        cursor.execute("""
+        INSERT INTO task_district_assignments (
+            district_id, assigned_by_user_id, doc_type, doc_number, doc_date,
+            priority, assignment_title, assignment_instructions, attachment_path,
+            deadline_date, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Yangi')
+        """, (
+            d['id'], user_id, doc_type, doc_number, doc_date,
+            priority, assignment_title, assignment_instructions, attachment_path,
+            deadline_date
+        ))
+        count += 1
+
+    log_audit("Yangi topshiriq/taqdimnoma yuborildi", f"{doc_type} #{doc_number}: {assignment_title} -> {assigned_msg}", user_fio, user_id)
+
+    conn.commit()
+    conn.close()
+
+    return JSONResponse({
+        "status": "success",
+        "message": f"{count} ta hududga ({assigned_msg}) '{doc_type}' hujjati muvaffaqiyatli yuborildi!",
+        "count": count
+    })
+
+# ==================== HUDUD JAVOB XATI VA ASOSLARINI TOPSHIRISH ====================
+@app.post("/api/district-assignments/submit-response")
+@app.post("/api/district-assignments/submit-proof")
+@app.post("/api/assignments/upload-proof")
+async def submit_district_response(
+    request: Request,
+    assignment_id: int = Form(...),
+    response_number: Optional[str] = Form(None),
+    response_date: Optional[str] = Form(None),
+    proof_text: Optional[str] = Form(""),
+    comment: Optional[str] = Form(None),
+    status: Optional[str] = Form(None),
+    response_file: Optional[UploadFile] = File(None),
+    proof_file: Optional[UploadFile] = File(None),
+    proof_files: Optional[List[UploadFile]] = File(None),
+    basis_files: Optional[List[UploadFile]] = File(None)
+):
+    user = get_current_user(request)
+    submitted_by = user.get("fio") if user else "Tuman MMTB Mas’uli"
+
+    # Merge proof_text / comment
+    final_text = (proof_text or "").strip()
+    if comment and comment.strip() and comment not in final_text:
+        final_text = f"{final_text}\n{comment.strip()}".strip() if final_text else comment.strip()
+
+    now_ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    resp_dir = os.path.join(STATIC_DIR, "uploads", "responses")
+    basis_dir = os.path.join(STATIC_DIR, "uploads", "responses", "basis")
+    os.makedirs(resp_dir, exist_ok=True)
+    os.makedirs(basis_dir, exist_ok=True)
+
+    # 1. Main response letter file (PDF / Word)
+    main_letter = response_file or proof_file
+    response_letter_web_path = None
+    all_files_for_local_passport = []
+
+    if main_letter and getattr(main_letter, 'filename', None) and main_letter.filename.strip():
+        safe_name = sanitize_filename(os.path.basename(main_letter.filename))
+        dest_filename = f"{now_ts}_javob_{safe_name}"
+        dest_path = os.path.join(resp_dir, dest_filename)
+        with open(dest_path, "wb") as bf:
+            shutil.copyfileobj(main_letter.file, bf)
+        main_letter.file.seek(0)
+        response_letter_web_path = f"/static/uploads/responses/{dest_filename}"
+        all_files_for_local_passport.append(main_letter)
+
+    # 2. Basis files (multiple attachments)
+    basis_web_paths = []
+    incoming_basis = []
+    if basis_files:
+        incoming_basis.extend([f for f in basis_files if f and getattr(f, 'filename', None) and f.filename.strip()])
     if proof_files:
-        all_files.extend([f for f in proof_files if f and getattr(f, 'filename', None)])
-    if proof_file and getattr(proof_file, 'filename', None) and proof_file not in all_files:
-        all_files.append(proof_file)
+        for f in proof_files:
+            if f and getattr(f, 'filename', None) and f.filename.strip() and f != main_letter and f not in incoming_basis:
+                incoming_basis.append(f)
 
-    submitted_by = "Tuman MMTB Mas’uli"
+    for idx, bf in enumerate(incoming_basis, 1):
+        safe_name = sanitize_filename(os.path.basename(bf.filename))
+        dest_filename = f"{now_ts}_asos_{idx}_{safe_name}"
+        dest_path = os.path.join(basis_dir, dest_filename)
+        with open(dest_path, "wb") as out:
+            shutil.copyfileobj(bf.file, out)
+        bf.file.seek(0)
+        basis_web_paths.append(f"/static/uploads/responses/basis/{dest_filename}")
+        all_files_for_local_passport.append(bf)
 
-    # Avtomatik ravishda kompyuterdagi ierarxik papkaga saqlash va pasport yaratish
-    save_result = save_uploaded_files_and_passport(
-        assignment_id=assignment_id,
-        submitted_by=submitted_by,
-        proof_text=proof_text,
-        files=all_files
-    )
+    # Local passport & windows storage (if available)
+    folder_path = ""
+    saved_files = []
+    try:
+        save_result = save_uploaded_files_and_passport(
+            assignment_id=assignment_id,
+            submitted_by=submitted_by,
+            proof_text=final_text,
+            files=all_files_for_local_passport
+        )
+        folder_path = save_result.get("folder_path", "")
+        saved_files = save_result.get("saved_files", [])
+    except Exception as e:
+        print(f"[Storage Service Info] {e}")
 
-    local_paths = save_result["local_paths"]
-    folder_path = save_result["folder_path"]
-    saved_files = save_result["saved_files"]
+    # Combine all attachments
+    all_attachments = []
+    if response_letter_web_path:
+        all_attachments.append(response_letter_web_path)
+    all_attachments.extend(basis_web_paths)
 
     conn = get_db()
     cursor = conn.cursor()
 
     cursor.execute("""
     INSERT INTO execution_proofs (
-        target_type, target_id, submitted_by_fio, proof_text, attachment_paths, approval_status
-    ) VALUES ('task_district_assignment', ?, ?, ?, ?, 'Kutilmoqda')
-    """, (assignment_id, submitted_by, proof_text, json.dumps(local_paths)))
+        target_type, target_id, submitted_by_user_id, submitted_by_fio,
+        proof_text, response_letter_number, response_letter_date,
+        response_letter_path, basis_attachments, attachment_paths, approval_status
+    ) VALUES ('task_district_assignment', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Kutilmoqda')
+    """, (
+        assignment_id, user.get("id") if user else None, submitted_by,
+        final_text, response_number or "", response_date or datetime.now().strftime("%Y-%m-%d"),
+        response_letter_web_path or "", json.dumps(basis_web_paths), json.dumps(all_attachments)
+    ))
 
     cursor.execute("UPDATE task_district_assignments SET status = 'Hisobot topshirildi' WHERE id = ?", (assignment_id,))
 
@@ -1293,10 +1508,48 @@ async def submit_proof(
 
     return JSONResponse({
         "status": "success", 
-        "message": f"Hisobot va {len(saved_files)} ta fayl kompyuterdagi papkaga muvaffaqiyatli saqlandi!",
+        "message": "Rasmiy javob xati va asoslovchi hujjatlar muvaffaqiyatli qabul qilindi!",
+        "response_letter_path": response_letter_web_path,
+        "basis_count": len(basis_web_paths),
         "folder_path": folder_path,
         "saved_files": saved_files
     })
+
+# ==================== BOSHQARMA TOMONIDAN IJRONI TEKSHIRISH / TASDIQLASH ====================
+@app.post("/api/district-assignments/review-status")
+async def review_district_assignment(
+    request: Request,
+    assignment_id: int = Form(...),
+    proof_id: Optional[int] = Form(None),
+    status: str = Form(...), # "Tasdiqlandi" or "Qaytarildi"
+    rejection_reason: Optional[str] = Form("")
+):
+    user = get_current_user(request)
+    if not user or user.get("role") not in ["admin", "regional_head", "curator"]:
+        raise HTTPException(status_code=403, detail="Ruxsat berilmagan")
+
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("UPDATE task_district_assignments SET status = ? WHERE id = ?", (status, assignment_id))
+
+    if proof_id:
+        cursor.execute("""
+        UPDATE execution_proofs 
+        SET approval_status = ?, rejection_reason = ?, approved_by_user_id = ?
+        WHERE id = ?
+        """, (status, rejection_reason or "", user.get("id"), proof_id))
+    else:
+        cursor.execute("""
+        UPDATE execution_proofs 
+        SET approval_status = ?, rejection_reason = ?, approved_by_user_id = ?
+        WHERE target_type = 'task_district_assignment' AND target_id = ?
+        ORDER BY id DESC LIMIT 1
+        """, (status, rejection_reason or "", user.get("id"), assignment_id))
+
+    conn.commit()
+    conn.close()
+    return JSONResponse({"status": "success", "message": f"Topshiriq holati '{status}' deb belgilandi!"})
 
 # Windows Explorer orqali papkani ochish API
 @app.post("/api/system/open-folder")

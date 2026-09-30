@@ -105,8 +105,13 @@ def init_db():
         district_id INTEGER NOT NULL,
         school_id INTEGER,
         assigned_by_user_id INTEGER,
+        doc_type TEXT DEFAULT 'Topshiriq',
+        doc_number TEXT,
+        doc_date TEXT,
+        priority TEXT DEFAULT 'Oddiy',
         assignment_title TEXT,
         assignment_instructions TEXT,
+        attachment_path TEXT,
         deadline_date TEXT,
         status TEXT DEFAULT 'Yangi',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -126,6 +131,10 @@ def init_db():
         submitted_by_user_id INTEGER,
         submitted_by_fio TEXT,
         proof_text TEXT,
+        response_letter_number TEXT,
+        response_letter_date TEXT,
+        response_letter_path TEXT,
+        basis_attachments TEXT,
         attachment_paths TEXT,
         submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         approval_status TEXT DEFAULT 'Kutilmoqda',
@@ -266,7 +275,31 @@ def init_db():
     cursor.execute("INSERT OR IGNORE INTO users (id, username, password_hash, fio, role, phone) VALUES (2, 'boshqarma_rahbar', 'rahbar123', 'Boshqarma boshlig‘i', 'regional_head', '+998911112233')")
     cursor.execute("INSERT OR IGNORE INTO users (id, username, password_hash, fio, role, phone) VALUES (3, 'azimov_a', 'azimov123', 'A.Azimov (Metodist-kurator)', 'curator', '+998933334455')")
     cursor.execute("INSERT OR IGNORE INTO users (id, username, password_hash, fio, role, phone) VALUES (4, 'turdiyev_r', 'turdiyev123', 'R.Turdiyev (Bo‘lim boshlig‘i)', 'curator', '+998944445566')")
-    cursor.execute("INSERT OR IGNORE INTO users (id, username, password_hash, fio, role, phone) VALUES (5, 'azamov_d', 'azamov123', 'D.A’zamov (Mutaxassis)', 'curator', '+998955556677')")
+    # Auto-migration for existing databases
+    cursor.execute("PRAGMA table_info(task_district_assignments)")
+    tda_cols = [c[1] for c in cursor.fetchall()]
+    new_tda_cols = [
+        ("doc_type", "TEXT DEFAULT 'Topshiriq'"),
+        ("doc_number", "TEXT"),
+        ("doc_date", "TEXT"),
+        ("priority", "TEXT DEFAULT 'Oddiy'"),
+        ("attachment_path", "TEXT")
+    ]
+    for col_name, col_type in new_tda_cols:
+        if col_name not in tda_cols:
+            cursor.execute(f"ALTER TABLE task_district_assignments ADD COLUMN {col_name} {col_type}")
+
+    cursor.execute("PRAGMA table_info(execution_proofs)")
+    ep_cols = [c[1] for c in cursor.fetchall()]
+    new_ep_cols = [
+        ("response_letter_number", "TEXT"),
+        ("response_letter_date", "TEXT"),
+        ("response_letter_path", "TEXT"),
+        ("basis_attachments", "TEXT")
+    ]
+    for col_name, col_type in new_ep_cols:
+        if col_name not in ep_cols:
+            cursor.execute(f"ALTER TABLE execution_proofs ADD COLUMN {col_name} {col_type}")
 
     conn.commit()
     conn.close()

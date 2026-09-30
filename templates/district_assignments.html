@@ -1,88 +1,281 @@
 {% extends "base.html" %}
 
-{% block title %}Hududiy Vazifalar | Farg‘ona MMTB Ijro Nazorati{% endblock %}
+{% block title %}Hududiy Vazifalar va Taqdimnomalar | Farg‘ona MMTB Ijro Nazorati{% endblock %}
 
 {% block content %}
 <div class="space-y-6">
 
-    <!-- Header & Filter -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+    <!-- Header & Action Controls -->
+    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200/80 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+            <div class="flex items-center gap-2 mb-1">
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    <i class="fa-solid fa-stamp text-[10px] mr-1"></i> Rasmiy Hujjatlar Nazorati
+                </span>
+                <span class="text-xs text-slate-400 font-medium">Boshqarma va 19 ta Tuman/Shahar MMTB</span>
+            </div>
+            <h1 class="text-xl sm:text-2xl font-black text-slate-800 tracking-tight flex items-center gap-2.5">
                 <i class="fa-solid fa-building-flag text-indigo-600"></i>
-                Hududlar va Maktablarga Yuklatilgan O‘rganishlar
+                Hududiy Topshiriqlar, IIB Taqdimnomalari va Murojaatlar
             </h1>
-            <p class="text-xs text-slate-500 mt-1">Boshqarma ish rejalaridan hududiy mas’ullar va maktablarga tushgan topshiriqlar monitoringi</p>
+            <p class="text-xs text-slate-500 mt-1 max-w-3xl">
+                Boshqarma topshiriqlari, IIB taqdimnomalari hamda fuqaro murojaatlarini hududlarga yuborish, ulardan rasmiy javob xati va asoslarini qabul qilish tizimi
+            </p>
         </div>
 
-        <form method="get" action="/district-assignments" class="flex items-center gap-2">
-            <select name="district_id" onchange="this.form.submit()" class="text-xs font-semibold px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700">
-                <option value="0" {% if selected_district == 0 %}selected{% endif %}>Barcha tuman/shaharlar (19 ta)</option>
-                {% for d in districts %}
-                <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
-                {% endfor %}
-            </select>
-        </form>
+        <div class="flex flex-wrap items-center gap-3">
+            <!-- Filter Dropdown -->
+            <form method="get" action="/district-assignments" class="flex items-center">
+                <select name="district_id" onchange="this.form.submit()" class="text-xs font-semibold px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 shadow-2xs hover:border-slate-300 focus:outline-hidden focus:ring-2 focus:ring-indigo-500">
+                    <option value="0" {% if selected_district == 0 %}selected{% endif %}>Barcha 19 ta tuman/shahar</option>
+                    {% for d in districts %}
+                    <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+
+            {% if current_user.role in ['admin', 'regional_head', 'curator'] %}
+            <!-- Create New Assignment Button -->
+            <button onclick="openCreateAssignmentModal()" 
+                    class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white font-bold text-xs shadow-md shadow-indigo-500/20 transition flex items-center gap-2">
+                <i class="fa-solid fa-plus-circle text-sm"></i>
+                <span>Yangi Taqdimnoma / Topshiriq Yuborish</span>
+            </button>
+            {% endif %}
+        </div>
     </div>
 
-    <!-- Assignments Table -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+    <!-- 5 KPI Summary Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <!-- 1. Jami -->
+        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-2xs">
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Jami Hujjatlar</div>
+            <div class="text-2xl font-black text-slate-900 mt-1">{{ stats.total or 0 }}</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Yuborilgan vazifalar</div>
+        </div>
+
+        <!-- 2. IIB Taqdimnomasi -->
+        <div class="bg-white p-4 rounded-2xl border border-blue-200/80 bg-blue-50/20 shadow-2xs">
+            <div class="text-[11px] font-bold text-blue-700 uppercase tracking-wider flex items-center gap-1">
+                <i class="fa-solid fa-shield-halved text-xs"></i> IIB Taqdimnoma
+            </div>
+            <div class="text-2xl font-black text-blue-900 mt-1">{{ stats.iib_count or 0 }}</div>
+            <div class="text-[10px] text-blue-600/70 mt-0.5">Ichki ishlar organi</div>
+        </div>
+
+        <!-- 3. Fuqaro murojaati -->
+        <div class="bg-white p-4 rounded-2xl border border-emerald-200/80 bg-emerald-50/20 shadow-2xs">
+            <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1">
+                <i class="fa-solid fa-user-pen text-xs"></i> Fuqaro Murojaati
+            </div>
+            <div class="text-2xl font-black text-emerald-900 mt-1">{{ stats.murojaat_count or 0 }}</div>
+            <div class="text-[10px] text-emerald-600/70 mt-0.5">Ariza va shikoyatlar</div>
+        </div>
+
+        <!-- 4. Boshqarma topshirig'i -->
+        <div class="bg-white p-4 rounded-2xl border border-purple-200/80 bg-purple-50/20 shadow-2xs">
+            <div class="text-[11px] font-bold text-purple-700 uppercase tracking-wider flex items-center gap-1">
+                <i class="fa-solid fa-file-signature text-xs"></i> Boshqarma Xati
+            </div>
+            <div class="text-2xl font-black text-purple-900 mt-1">{{ stats.topshiriq_count or 0 }}</div>
+            <div class="text-[10px] text-purple-600/70 mt-0.5">Ichki ish reja/topshiriq</div>
+        </div>
+
+        <!-- 5. Javob topshirilgan -->
+        <div class="bg-white p-4 rounded-2xl border border-teal-200/80 bg-teal-50/20 shadow-2xs">
+            <div class="text-[11px] font-bold text-teal-700 uppercase tracking-wider flex items-center gap-1">
+                <i class="fa-solid fa-circle-check text-xs"></i> Javob Berilgan
+            </div>
+            <div class="text-2xl font-black text-teal-900 mt-1">{{ stats.submitted_count or 0 }}</div>
+            <div class="text-[10px] text-teal-600/70 mt-0.5">Rasmiy xat topshirildi</div>
+        </div>
+
+        <!-- 6. Kutilmoqda -->
+        <div class="bg-white p-4 rounded-2xl border border-amber-200/80 bg-amber-50/20 shadow-2xs">
+            <div class="text-[11px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1">
+                <i class="fa-solid fa-clock text-xs"></i> Ijroda / Kutilmoqda
+            </div>
+            <div class="text-2xl font-black text-amber-900 mt-1">{{ stats.pending_count or 0 }}</div>
+            <div class="text-[10px] text-amber-600/70 mt-0.5">Muddati o‘tmagan</div>
+        </div>
+    </div>
+
+    <!-- Assignments Main Table -->
+    <div class="bg-white rounded-3xl shadow-sm border border-slate-200/80 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse text-xs">
                 <thead>
-                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
-                        <th class="py-3 px-4 w-12">№</th>
-                        <th class="py-3 px-4 w-36">Hudud (Tuman/shahar)</th>
-                        <th class="py-3 px-4">Topshiriq / O‘rganish mavzusi</th>
-                        <th class="py-3 px-4 w-28">Ijro muddati</th>
-                        <th class="py-3 px-4 w-36">Biriktirgan kurator</th>
-                        <th class="py-3 px-4 w-32">Holati</th>
-                        <th class="py-3 px-4 w-32 text-center">Harakat</th>
+                    <tr class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider">
+                        <th class="py-3.5 px-4 w-10 text-center">№</th>
+                        <th class="py-3.5 px-4 w-44">Hujjat turi & Rekvizitlari</th>
+                        <th class="py-3.5 px-4 w-40">Hudud (Tuman/Shahar)</th>
+                        <th class="py-3.5 px-4 min-w-[220px]">Topshiriq / Murojaat Mazmuni</th>
+                        <th class="py-3.5 px-4 w-32">Ijro Muddati</th>
+                        <th class="py-3.5 px-4 w-52">Tuman Javob Xati & Asoslari</th>
+                        <th class="py-3.5 px-4 w-28 text-center">Holati</th>
+                        <th class="py-3.5 px-4 w-36 text-center">Harakatlar</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
                     {% for a in assignments %}
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="py-3 px-4 font-bold text-slate-500">{{ loop.index }}</td>
-                        <td class="py-3 px-4 font-bold text-slate-800 flex items-center gap-1.5">
-                            <i class="fa-solid fa-location-dot text-indigo-500 text-xs"></i>
-                            {{ a.district_name }}
+                    <tr class="hover:bg-slate-50/80 transition group">
+                        <td class="py-3.5 px-4 text-center font-bold text-slate-400">{{ loop.index }}</td>
+
+                        <!-- Hujjat turi va birlamchi fayl -->
+                        <td class="py-3.5 px-4">
+                            <div class="flex flex-col gap-1 items-start">
+                                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold
+                                    {% if a.doc_type == 'IIB taqdimnomasi' %}bg-blue-100 text-blue-800 border border-blue-200
+                                    {% elif a.doc_type == 'Fuqaro murojaati' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                                    {% elif a.doc_type in ['Prokuratura taqdimnomasi', 'Prokuratura protesti'] %}bg-purple-100 text-purple-800 border border-purple-200
+                                    {% else %}bg-amber-100 text-amber-800 border border-amber-200{% endif %}">
+                                    {% if a.doc_type == 'IIB taqdimnomasi' %}<i class="fa-solid fa-shield-halved text-[9px]"></i>
+                                    {% elif a.doc_type == 'Fuqaro murojaati' %}<i class="fa-solid fa-user-pen text-[9px]"></i>
+                                    {% else %}<i class="fa-solid fa-file-lines text-[9px]"></i>{% endif %}
+                                    {{ a.doc_type or 'Topshiriq' }}
+                                </span>
+
+                                {% if a.doc_number or a.doc_date %}
+                                <div class="text-[11px] font-semibold text-slate-700">
+                                    {{ a.doc_number or 'Raqamsiz' }} 
+                                    <span class="text-slate-400 font-normal">({{ a.doc_date or '-' }})</span>
+                                </div>
+                                {% endif %}
+
+                                {% if a.attachment_path %}
+                                <a href="{{ a.attachment_path }}" target="_blank" 
+                                   class="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 underline bg-indigo-50/70 px-2 py-0.5 rounded-md mt-0.5"
+                                   title="Boshqarma biriktirgan PDF/Word hujjatni yuklab olish">
+                                    <i class="fa-solid fa-file-pdf text-red-500"></i> Hujjat ilovasi (PDF)
+                                </a>
+                                {% endif %}
+                            </div>
                         </td>
-                        <td class="py-3 px-4">
-                            <div class="font-semibold text-slate-800">{{ a.assignment_title }}</div>
-                            <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{{ a.assignment_instructions }}</div>
+
+                        <!-- Hudud -->
+                        <td class="py-3.5 px-4 font-bold text-slate-800">
+                            <div class="flex items-center gap-1.5">
+                                <i class="fa-solid fa-location-dot text-indigo-500 text-xs"></i>
+                                <span>{{ a.district_name }}</span>
+                            </div>
+                            <div class="text-[10px] text-slate-400 font-medium mt-0.5">
+                                Mas’ul: {{ a.assigned_by_fio or 'Boshqarma' }}
+                            </div>
                         </td>
-                        <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">
-                            <i class="fa-regular fa-calendar text-slate-400 mr-1"></i>
-                            {{ a.deadline_date or 'Belgilanmagan' }}
+
+                        <!-- Mazmuni -->
+                        <td class="py-3.5 px-4">
+                            <div class="font-bold text-slate-900 group-hover:text-indigo-600 transition">{{ a.assignment_title }}</div>
+                            {% if a.assignment_instructions %}
+                            <div class="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                                {{ a.assignment_instructions }}
+                            </div>
+                            {% endif %}
                         </td>
-                        <td class="py-3 px-4 font-semibold text-slate-600">{{ a.assigned_by_fio or 'Boshqarma mas’uli' }}</td>
-                        <td class="py-3 px-4">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold 
-                                {% if a.status == 'Hisobot topshirildi' %}bg-emerald-100 text-emerald-700
-                                {% elif a.status == 'Tasdiqlandi' %}bg-blue-100 text-blue-700
-                                {% elif a.status == 'Kechikdi' %}bg-red-100 text-red-700
-                                {% else %}bg-amber-100 text-amber-700{% endif %}">
+
+                        <!-- Ijro muddati & Priority -->
+                        <td class="py-3.5 px-4 whitespace-nowrap">
+                            <div class="font-bold text-slate-700 flex items-center gap-1">
+                                <i class="fa-regular fa-calendar text-slate-400 text-xs"></i>
+                                {{ a.deadline_date or 'Belgilanmagan' }}
+                            </div>
+                            {% if a.priority %}
+                            <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold
+                                {% if a.priority == 'Shoshilinch' %}bg-red-100 text-red-700 animate-pulse
+                                {% elif a.priority == 'Muhim' %}bg-amber-100 text-amber-700
+                                {% else %}bg-slate-100 text-slate-600{% endif %}">
+                                {{ a.priority }}
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Tuman Javob Xati & Asoslari -->
+                        <td class="py-3.5 px-4">
+                            {% if a.proof_id or a.status in ['Hisobot topshirildi', 'Tasdiqlandi'] %}
+                            <div class="space-y-1">
+                                {% if a.response_letter_number or a.response_letter_date %}
+                                <div class="text-[11px] font-bold text-slate-800 flex items-center gap-1">
+                                    <i class="fa-solid fa-envelope-open-text text-emerald-600 text-xs"></i>
+                                    № {{ a.response_letter_number or 'Javob xati' }} ({{ a.response_letter_date or '' }})
+                                </div>
+                                {% endif %}
+
+                                <div class="flex flex-wrap gap-1.5 items-center">
+                                    {% if a.response_letter_path %}
+                                    <a href="{{ a.response_letter_path }}" target="_blank" 
+                                       class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold hover:bg-emerald-100 transition">
+                                        <i class="fa-solid fa-file-pdf text-red-500"></i> Javob xati (PDF)
+                                    </a>
+                                    {% endif %}
+
+                                    {% if a.basis_list and a.basis_list | length > 0 %}
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 text-[10px] font-bold">
+                                        <i class="fa-solid fa-paperclip"></i> {{ a.basis_list | length }} ta asos
+                                    </span>
+                                    {% endif %}
+                                </div>
+
+                                {% if a.proof_text %}
+                                <div class="text-[10px] text-slate-500 line-clamp-1 italic">
+                                    "{{ a.proof_text }}"
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <div class="text-[11px] text-slate-400 italic flex items-center gap-1">
+                                <i class="fa-regular fa-clock text-amber-500"></i> Hali javob xati berilmagan
+                            </div>
+                            {% endif %}
+                        </td>
+
+                        <!-- Holati -->
+                        <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold
+                                {% if a.status == 'Hisobot topshirildi' %}bg-emerald-100 text-emerald-800 border border-emerald-200
+                                {% elif a.status == 'Tasdiqlandi' %}bg-blue-100 text-blue-800 border border-blue-200
+                                {% elif a.status == 'Qaytarildi' %}bg-rose-100 text-rose-800 border border-rose-200
+                                {% elif a.status == 'Kechikdi' %}bg-red-100 text-red-800 border border-red-200
+                                {% else %}bg-amber-100 text-amber-800 border border-amber-200{% endif %}">
+                                {% if a.status == 'Hisobot topshirildi' %}<i class="fa-solid fa-check text-[10px] mr-1"></i>
+                                {% elif a.status == 'Tasdiqlandi' %}<i class="fa-solid fa-circle-check text-[10px] mr-1"></i>
+                                {% elif a.status == 'Qaytarildi' %}<i class="fa-solid fa-rotate-left text-[10px] mr-1"></i>
+                                {% else %}<i class="fa-solid fa-hourglass-half text-[10px] mr-1"></i>{% endif %}
                                 {{ a.status }}
                             </span>
                         </td>
-                        <td class="py-3 px-4 text-center whitespace-nowrap">
-                            <button onclick="openSubmitProofModal({{ a.id }}, '{{ a.assignment_title | escape }}')" 
-                                    class="inline-flex items-center px-2.5 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold transition text-[11px]">
-                                <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Hisobot yuklash
+
+                        <!-- Harakatlar -->
+                        <td class="py-3.5 px-4 text-center whitespace-nowrap space-y-1">
+                            <!-- Agar tuman foydalanuvchisi bo'lsa yoki admin test qilsa -->
+                            <button onclick="openSubmitProofModal({{ a.id }}, '{{ a.assignment_title | escape }}', '{{ a.doc_type or '' }}', '{{ a.doc_number or '' }}')" 
+                                    class="w-full inline-flex items-center justify-center px-2.5 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold transition text-[11px] border border-indigo-200 shadow-2xs">
+                                <i class="fa-solid fa-cloud-arrow-up mr-1 text-indigo-600"></i> Javob xati kiritish
                             </button>
-                            {% if a.proof_count > 0 or a.status in ['Hisobot topshirildi', 'Tasdiqlandi'] %}
-                            <button onclick="openExplorerFolder({{ a.id }})" 
-                                    class="inline-flex items-center px-2.5 py-1 rounded bg-slate-800 text-amber-400 hover:bg-slate-900 font-semibold transition text-[11px] ml-1 shadow-sm"
-                                    title="Kompyuterdagi tuman papkasini ochish">
-                                <i class="fa-solid fa-folder-open mr-1"></i> Papkani ochish
-                            </button>
-                            {% endif %}
+
+                            <div class="flex items-center justify-center gap-1">
+                                <!-- Batafsil ko'rish modali -->
+                                <button onclick="viewAssignmentDetails({{ a | tojson | escape }})"
+                                        class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-[10px] transition"
+                                        title="Batafsil ma’lumotlarni ko‘rish">
+                                    <i class="fa-solid fa-eye"></i> Ko‘rish
+                                </button>
+
+                                {% if a.proof_count > 0 or a.status in ['Hisobot topshirildi', 'Tasdiqlandi'] %}
+                                <button onclick="openExplorerFolder({{ a.id }})" 
+                                        class="px-2 py-1 rounded bg-slate-800 text-amber-400 hover:bg-slate-900 font-bold text-[10px] transition shadow-2xs"
+                                        title="Kompyuterdagi tuman papkasini ochish">
+                                    <i class="fa-solid fa-folder-open"></i> Papka
+                                </button>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="7" class="py-8 text-center text-slate-400 italic">Hozirda yuklatilgan hududiy topshiriqlar mavjud emas.</td>
+                        <td colspan="8" class="py-12 text-center text-slate-400 italic">
+                            <i class="fa-regular fa-folder-open text-3xl mb-2 block text-slate-300"></i>
+                            Hozirda yuklatilgan hududiy topshiriqlar mavjud emas.
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -92,60 +285,428 @@
 
 </div>
 
-<!-- Modal: Submit Proof -->
-<div id="proofModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between border-b pb-3">
-            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
-                <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i>
-                Ijro hisoboti va fayllarni yuklash
-            </h3>
-            <button onclick="closeSubmitProofModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+<!-- ==================== MODAL 1: YANGI HUJJAT / TOPSHIRIQ YUBORISH ==================== -->
+<div id="createAssignmentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-5 my-8">
+        <div class="flex items-center justify-between border-b pb-4">
+            <div>
+                <h3 class="font-extrabold text-slate-900 text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane text-indigo-600"></i>
+                    Yangi Hujjat / Taqdimnoma Yuborish
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Topshiriq, IIB taqdimnomasi yoki fuqaro murojaatini hududlarga biriktirish</p>
+            </div>
+            <button onclick="closeCreateAssignmentModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
 
-        <form id="proofForm" class="space-y-3 text-xs" enctype="multipart/form-data">
-            <input type="hidden" id="proofAssignmentId" name="assignment_id">
-            
-            <div>
-                <label class="block font-semibold text-slate-700 mb-1">Topshiriq nomi:</label>
-                <div id="proofAssignmentTitle" class="p-2.5 bg-slate-50 rounded-lg text-slate-700 border border-slate-200 font-medium"></div>
+        <form id="createAssignmentForm" class="space-y-4 text-xs" enctype="multipart/form-data">
+            <!-- 1. Hujjat turi va rekvizitlari -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Hujjat turi:</label>
+                    <select name="doc_type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800">
+                        <option value="IIB taqdimnomasi">IIB taqdimnomasi</option>
+                        <option value="Fuqaro murojaati">Fuqaro murojaati</option>
+                        <option value="Boshqarma topshirig‘i" selected>Boshqarma topshirig‘i / xati</option>
+                        <option value="Prokuratura taqdimnomasi">Prokuratura taqdimnomasi / protesti</option>
+                        <option value="Sud ajrimi">Sud ajrimi</option>
+                        <option value="Boshqa">Boshqa hujjat</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Hujjat raqami:</label>
+                    <input type="text" name="doc_number" placeholder="Masalan: № 12/4-89" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Hujjat sanasi:</label>
+                    <input type="date" name="doc_date" value="{{ now_date or '2026-09-30' }}" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800">
+                </div>
             </div>
 
-            <div>
-                <label class="block font-semibold text-slate-700 mb-1">Bajarilgan ish yuzasidan batafsil ma’lumot / izoh:</label>
-                <textarea name="proof_text" rows="4" required placeholder="O‘rganish natijalari, ko‘rilgan choralar va xulosalar..." class="w-full p-2.5 border rounded-lg text-slate-700"></textarea>
+            <!-- 2. Muddat va Muhimlik -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Ijro muddati:</label>
+                    <input type="date" name="deadline_date" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-800">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Muhimlik darajasi:</label>
+                    <select name="priority" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-800">
+                        <option value="Oddiy" selected>Oddiy (standart muddat)</option>
+                        <option value="Muhim">Muhim (alohida nazorat)</option>
+                        <option value="Shoshilinch">Shoshilinch (tezkor ijro!)</option>
+                    </select>
+                </div>
             </div>
 
+            <!-- 3. Hududlarni tanlash -->
+            <div class="p-3.5 bg-indigo-50/40 rounded-2xl border border-indigo-100 space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="font-extrabold text-indigo-950 flex items-center gap-1.5">
+                        <i class="fa-solid fa-map-location-dot text-indigo-600"></i>
+                        Qaysi hudud(lar)ga yuborilsin?
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="selectAllDistricts(true)" class="text-[10px] font-bold text-indigo-600 hover:underline">Hammasini tanlash</button>
+                        <span class="text-slate-300">|</span>
+                        <button type="button" onclick="selectAllDistricts(false)" class="text-[10px] font-bold text-slate-500 hover:underline">Tozalash</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 max-h-40 overflow-y-auto pr-1">
+                    {% for d in districts %}
+                    <label class="flex items-center gap-1.5 p-1.5 bg-white rounded-lg border border-slate-200 hover:border-indigo-300 cursor-pointer transition text-[11px] font-medium text-slate-700">
+                        <input type="checkbox" name="selected_districts" value="{{ d.id }}" class="rounded text-indigo-600 focus:ring-indigo-500">
+                        <span class="truncate">{{ d.name }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- 4. Topshiriq mavzusi -->
             <div>
-                <label class="block font-semibold text-slate-700 mb-1">Tasdiqlovchi hujjatlar (Word, PDF, Excel, JPG):</label>
-                <input type="file" name="proof_files" multiple class="w-full p-2 border rounded-lg text-slate-700 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
-                <p class="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
-                    <i class="fa-solid fa-circle-info text-blue-500"></i>
-                    Bir vaqtning o‘zida bir nechta fayl tanlashingiz mumkin. Barcha fayllar avtomatik kompyuterdagi tuman papkasiga yuklab saqlanadi.
-                </p>
+                <label class="block font-bold text-slate-700 mb-1">Topshiriq / Murojaat mavzusi (qisqa nomi):</label>
+                <input type="text" name="assignment_title" required placeholder="Masalan: 14-maktab o‘quvchisi huquqbuzarligi bo‘yicha IIB taqdimnomasi ijrosi" class="w-full p-2.5 border border-slate-200 rounded-xl font-medium text-slate-800">
+            </div>
+
+            <!-- 5. Mazmuni va ko'rsatmalar -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">Topshiriq mazmuni va hududga ko‘rsatmalar:</label>
+                <textarea name="assignment_instructions" rows="3" placeholder="Ko‘rilishi kerak bo‘lgan chora-tadbirlar, o‘rganish talablari va javob xati topshirish shakli..." class="w-full p-2.5 border border-slate-200 rounded-xl font-medium text-slate-800 leading-relaxed"></textarea>
+            </div>
+
+            <!-- 6. Birlamchi Hujjat Fayli (PDF / Word) -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1 flex items-center justify-between">
+                    <span>Birlamchi hujjat ilovasi (Taqdimnoma yoki xat skaneri - PDF/Word):</span>
+                    <span class="text-[10px] text-slate-400 font-normal">Ixtiyoriy</span>
+                </label>
+                <input type="file" name="attachment_file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
             </div>
 
             <div class="pt-3 border-t flex justify-end gap-2">
-                <button type="button" onclick="closeSubmitProofModal()" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 font-medium hover:bg-slate-200">Bekor qilish</button>
-                <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 flex items-center gap-1.5">
-                    <i class="fa-solid fa-check text-xs"></i> Hisobotni kompyuterga saqlash
+                <button type="button" onclick="closeCreateAssignmentModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition">Bekor qilish</button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition flex items-center gap-1.5 shadow-md shadow-indigo-500/20">
+                    <i class="fa-solid fa-paper-plane text-xs"></i> Hududlarga Yuborish
                 </button>
             </div>
         </form>
     </div>
 </div>
+
+<!-- ==================== MODAL 2: JAVOB XATI VA ASOSLARINI YUKLASH ==================== -->
+<div id="proofModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl space-y-4 my-8">
+        <div class="flex items-center justify-between border-b pb-3">
+            <div>
+                <h3 class="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-envelope-open-text text-emerald-600"></i>
+                    Rasmiy Javob Xati va Asoslarini Yuklash
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-0.5">Topshiriq ijrosi bo‘yicha rasmiy tuman xati va ilovalarini kiritish</p>
+            </div>
+            <button onclick="closeSubmitProofModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <form id="proofForm" class="space-y-3.5 text-xs" enctype="multipart/form-data">
+            <input type="hidden" id="proofAssignmentId" name="assignment_id">
+            
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Topshiriq nomi:</div>
+                <div id="proofAssignmentTitle" class="font-bold text-slate-800"></div>
+                <div id="proofAssignmentDocMeta" class="text-[11px] text-indigo-600 font-semibold"></div>
+            </div>
+
+            <!-- Javob xati rekvizitlari -->
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Javob xati raqami:</label>
+                    <input type="text" name="response_number" required placeholder="Masalan: № 01-14/56" class="w-full p-2.5 border border-slate-200 rounded-xl font-semibold text-slate-800">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Javob xati sanasi:</label>
+                    <input type="date" name="response_date" required class="w-full p-2.5 border border-slate-200 rounded-xl font-semibold text-slate-800">
+                </div>
+            </div>
+
+            <!-- Mazmuni / izoh -->
+            <div>
+                <label class="block font-bold text-slate-700 mb-1">Bajarilgan ishlar mazmuni / xulosasi:</label>
+                <textarea name="proof_text" rows="3" required placeholder="Taqdimnoma/murojaat yuzasidan o‘tkazilgan tadbirlar, ko‘rilgan choralar va xulosa..." class="w-full p-2.5 border border-slate-200 rounded-xl text-slate-800 leading-relaxed"></textarea>
+            </div>
+
+            <!-- 1. Rasmiy javob xati PDF fayli -->
+            <div class="p-3 bg-emerald-50/50 rounded-xl border border-emerald-200/80">
+                <label class="block font-bold text-emerald-950 mb-1 flex items-center gap-1.5">
+                    <i class="fa-solid fa-file-pdf text-red-500"></i>
+                    Rasmiy Javob Xati (PDF / Word skaner):
+                </label>
+                <input type="file" name="response_file" required accept=".pdf,.doc,.docx,.jpg,.png" class="w-full p-2 bg-white border border-emerald-200 rounded-lg text-slate-700 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-xs file:font-bold file:bg-emerald-100 file:text-emerald-800">
+                <p class="text-[10px] text-emerald-700 mt-1">Imzolangan va muhrlangan rasmiy javob xati fayli.</p>
+            </div>
+
+            <!-- 2. Asoslovchi qo'shimcha fayllar (multiple) -->
+            <div class="p-3 bg-indigo-50/40 rounded-xl border border-indigo-200/80">
+                <label class="block font-bold text-indigo-950 mb-1 flex items-center justify-between">
+                    <span class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-paperclip text-indigo-600"></i>
+                        Asoslovchi qo‘shimcha hujjatlar (Ilovasi):
+                    </span>
+                    <span class="text-[10px] text-indigo-500 font-normal">Bir nechta</span>
+                </label>
+                <input type="file" name="basis_files" multiple class="w-full p-2 bg-white border border-indigo-200 rounded-lg text-slate-700 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-xs file:font-bold file:bg-indigo-100 file:text-indigo-800">
+                <p class="text-[10px] text-indigo-600 mt-1">Tushuntirish xatlari, fotosuratlar, dalolatnomalar, buyruq nusxalari va h.k.</p>
+            </div>
+
+            <div class="pt-3 border-t flex justify-end gap-2">
+                <button type="button" onclick="closeSubmitProofModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200">Bekor qilish</button>
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 flex items-center gap-1.5 shadow-md shadow-emerald-600/20">
+                    <i class="fa-solid fa-check text-xs"></i> Javob Xatini Saqlash
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== MODAL 3: BATAFSIL MA’LUMOT VA TASDIQLASH ==================== -->
+<div id="detailModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl space-y-4 my-8">
+        <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                <i class="fa-solid fa-folder-open text-indigo-600"></i>
+                Hujjat va Ijro Tafsilotlari
+            </h3>
+            <button onclick="closeDetailModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div id="detailContent" class="space-y-4 text-xs">
+            <!-- Dynamic content inserted by JS -->
+        </div>
+
+        {% if current_user.role in ['admin', 'regional_head', 'curator'] %}
+        <div id="reviewActions" class="pt-4 border-t flex items-center justify-between gap-3">
+            <div class="text-[11px] text-slate-500 font-medium">Boshqarma qarori:</div>
+            <div class="flex items-center gap-2">
+                <button onclick="reviewAssignment('Qaytarildi')" class="px-3.5 py-2 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 font-bold hover:bg-rose-100 transition flex items-center gap-1">
+                    <i class="fa-solid fa-rotate-left"></i> Qayta ishlashga qaytarish
+                </button>
+                <button onclick="reviewAssignment('Tasdiqlandi')" class="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-md shadow-emerald-500/20">
+                    <i class="fa-solid fa-check-double"></i> Ijroni Tasdiqlash
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
 <script>
-    function openSubmitProofModal(id, title) {
-        document.getElementById('proofAssignmentId').value = id;
-        document.getElementById('proofAssignmentTitle').innerText = title;
-        document.getElementById('proofModal').classList.remove('hidden');
+    let activeAssignment = null;
+
+    // --- Modal 1: Create Assignment ---
+    function openCreateAssignmentModal() {
+        document.getElementById('createAssignmentModal').classList.remove('hidden');
+    }
+    function closeCreateAssignmentModal() {
+        document.getElementById('createAssignmentModal').classList.add('hidden');
     }
 
+    function selectAllDistricts(status) {
+        const checkboxes = document.querySelectorAll('input[name="selected_districts"]');
+        checkboxes.forEach(cb => cb.checked = status);
+    }
+
+    document.getElementById('createAssignmentForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const form = this;
+        const formData = new FormData(form);
+
+        // Collect selected district IDs
+        const selected = Array.from(document.querySelectorAll('input[name="selected_districts"]:checked')).map(cb => cb.value);
+        if (selected.length === 0) {
+            formData.set('district_ids', 'all');
+        } else {
+            formData.set('district_ids', selected.join(','));
+        }
+
+        Swal.fire({
+            title: 'Hujjat yuborilmoqda...',
+            text: 'Iltimos, kuting...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const res = await fetch('/api/admin/create-district-assignment', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Muvaffaqiyatli yuborildi!',
+                    text: data.message,
+                    confirmButtonColor: '#4f46e5'
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.detail || data.message || 'Xatolik yuz berdi', 'error');
+            }
+        } catch(err) {
+            Swal.close();
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik yuz berdi: ' + err.message, 'error');
+        }
+    });
+
+    // --- Modal 2: Submit Response ---
+    function openSubmitProofModal(id, title, docType, docNumber) {
+        document.getElementById('proofAssignmentId').value = id;
+        document.getElementById('proofAssignmentTitle').innerText = title;
+        document.getElementById('proofAssignmentDocMeta').innerText = (docType ? docType + ' ' : '') + (docNumber ? '№ ' + docNumber : '');
+        document.getElementById('proofModal').classList.remove('hidden');
+    }
     function closeSubmitProofModal() {
         document.getElementById('proofModal').classList.add('hidden');
+    }
+
+    document.getElementById('proofForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        Swal.fire({
+            title: 'Javob xati saqlanmoqda...',
+            text: 'Fayllar kompyuter bazasiga yuklanmoqda',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const res = await fetch('/api/district-assignments/submit-response', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Javob xati qabul qilindi!',
+                    html: `<b>Holati:</b> Hisobot muvaffaqiyatli topshirildi.<br><span class="text-xs text-slate-500">${data.basis_count} ta ilova biriktirildi.</span>`,
+                    confirmButtonColor: '#059669'
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.detail || 'Xatolik yuz berdi', 'error');
+            }
+        } catch(err) {
+            Swal.close();
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik: ' + err.message, 'error');
+        }
+    });
+
+    // --- Modal 3: View Details & Review ---
+    function viewAssignmentDetails(item) {
+        activeAssignment = item;
+        const container = document.getElementById('detailContent');
+        
+        let basisHtml = '<span class="text-slate-400 italic">Ilovalar mavjud emas</span>';
+        if (item.basis_list && item.basis_list.length > 0) {
+            basisHtml = '<ul class="space-y-1 mt-1">';
+            item.basis_list.forEach((path, idx) => {
+                const fname = path.split('/').pop();
+                basisHtml += `<li><a href="${path}" target="_blank" class="text-indigo-600 hover:underline font-bold flex items-center gap-1"><i class="fa-solid fa-paperclip text-slate-400"></i> ${fname}</a></li>`;
+            });
+            basisHtml += '</ul>';
+        }
+
+        container.innerHTML = `
+            <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">${item.doc_type || 'Topshiriq'}</span>
+                    <span class="text-slate-500 font-semibold">${item.district_name}</span>
+                </div>
+                <div class="font-extrabold text-slate-900 text-sm">${item.assignment_title}</div>
+                <div class="text-[11px] text-slate-600 leading-relaxed">${item.assignment_instructions || '-'}</div>
+                <div class="pt-2 border-t border-slate-200/60 flex flex-wrap gap-4 text-slate-500 text-[11px]">
+                    <div><b>Hujjat:</b> ${item.doc_number || '-'} (${item.doc_date || '-'})</div>
+                    <div><b>Ijro muddati:</b> ${item.deadline_date || '-'}</div>
+                </div>
+                ${item.attachment_path ? `<div class="pt-2"><a href="${item.attachment_path}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-700 border border-red-200 rounded-lg font-bold text-xs"><i class="fa-solid fa-file-pdf"></i> Taqdimnoma/Topshiriq faylini yuklab olish</a></div>` : ''}
+            </div>
+
+            <div class="p-3 bg-emerald-50/40 rounded-2xl border border-emerald-200 space-y-2">
+                <div class="font-extrabold text-emerald-950 flex items-center gap-1.5">
+                    <i class="fa-solid fa-envelope-open-text text-emerald-600"></i>
+                    Tuman Taqdim Etgan Rasmiy Javob Xati
+                </div>
+                ${item.proof_id ? `
+                    <div class="text-slate-700 space-y-1.5">
+                        <div><b>Javob xati №:</b> ${item.response_letter_number || '-'} (${item.response_letter_date || '-'})</div>
+                        <div><b>Topshiruvchi:</b> ${item.proof_submitted_by || item.district_name}</div>
+                        <div><b>Mazmuni:</b> ${item.proof_text || '-'}</div>
+                        ${item.response_letter_path ? `<div class="pt-1"><a href="${item.response_letter_path}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-600 text-white rounded-lg font-bold text-xs"><i class="fa-solid fa-file-pdf"></i> Rasmiy Javob Xati (PDF)ni ochish</a></div>` : ''}
+                        <div class="pt-2"><b>Asoslovchi hujjatlar / Ilovalar:</b> ${basisHtml}</div>
+                    </div>
+                ` : `<div class="text-slate-400 italic py-2">Hali hisobot topshirilmagan.</div>`}
+            </div>
+        `;
+
+        document.getElementById('detailModal').classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+        document.getElementById('detailModal').classList.add('hidden');
+        activeAssignment = null;
+    }
+
+    async function reviewAssignment(status) {
+        if (!activeAssignment) return;
+        let reason = "";
+        if (status === 'Qaytarildi') {
+            const { value: text } = await Swal.fire({
+                input: 'textarea',
+                inputLabel: 'Qaytarish sababi va kamchiliklar:',
+                inputPlaceholder: 'Masalan: Taqdimnoma ijrosi bo‘yicha bayonnoma to‘liq emas...',
+                inputAttributes: { 'aria-label': 'Sabab' },
+                showCancelButton: true,
+                confirmButtonText: 'Qaytarish',
+                cancelButtonText: 'Bekor qilish'
+            });
+            if (!text) return;
+            reason = text;
+        }
+
+        const formData = new FormData();
+        formData.append('assignment_id', activeAssignment.id);
+        formData.append('status', status);
+        formData.append('rejection_reason', reason);
+
+        try {
+            const res = await fetch('/api/district-assignments/review-status', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                Swal.fire('Bajarildi', data.message, 'success').then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.detail || 'Xatolik yuz berdi', 'error');
+            }
+        } catch(e) {
+            Swal.fire('Xatolik', e.message, 'error');
+        }
     }
 
     async function openExplorerFolder(assignmentId) {
@@ -159,7 +720,7 @@
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
-                    title: 'Papka kompyuterda ochildi!',
+                    title: 'Papka ochildi!',
                     text: data.path,
                     showConfirmButton: false,
                     timer: 3000
@@ -171,42 +732,5 @@
             alert("Xatolik: " + e.message);
         }
     }
-
-    document.getElementById('proofForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-
-        Swal.fire({
-            title: 'Fayllar kompyuterga saqlanmoqda...',
-            text: 'Iltimos, kuting...',
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-        });
-
-        const res = await fetch('/api/district-assignments/submit-proof', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await res.json();
-        Swal.close();
-
-        if (data.status === 'success') {
-            Swal.fire({
-                icon: 'success',
-                title: 'Hisobot qabul qilindi va kompyuterga saqlandi!',
-                html: `<b>Papkasi:</b><br><code class="text-xs text-slate-700 bg-slate-100 p-1 rounded">${data.folder_path}</code><br><br><span class="text-xs text-slate-500">${data.saved_files.length} ta fayl papkaga joylandi.</span>`,
-                confirmButtonColor: '#059669',
-                confirmButtonText: 'Tushunarli'
-            }).then(() => {
-                window.location.reload();
-            });
-        } else {
-            Swal.fire({
-                icon: 'error',
-                title: 'Xatolik',
-                text: data.detail || 'Xatolik yuz berdi'
-            });
-        }
-    });
 </script>
 {% endblock %}
