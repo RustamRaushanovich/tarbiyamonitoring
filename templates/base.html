@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Farg‘ona MMTB | Ijro Nazorati va Monitoring Tizimi{% endblock %}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- PWA Mobile App Support -->
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#1e3a8a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MMTB Nazorat">
+    <link rel="apple-touch-icon" href="/static/img/logo.svg">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .gradient-header { background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800">
+
+    <!-- Top Navigation Bar -->
+    <header class="gradient-header text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
+                        <i class="fa-solid fa-graduation-cap text-xl text-yellow-300"></i>
+                    </div>
+                    <div>
+                        <a href="/" class="font-bold text-lg tracking-tight block">Farg‘ona viloyati MMTB</a>
+                        <span class="text-xs text-blue-200 block">Ijro nazorati va monitoring axborot tizimi</span>
+                    </div>
+                </div>
+
+                <nav class="hidden lg:flex space-x-1">
+                    {% if current_user and current_user.role == 'district' %}
+                    <a href="/district-portal" class="px-3 py-2 rounded-lg text-sm font-bold hover:bg-white/10 transition flex items-center gap-1.5 text-yellow-300">
+                        <i class="fa-solid fa-building-flag text-xs"></i> Mening Hududim
+                    </a>
+                    <a href="/monthly-15?district={{ current_user.district_name | urlencode }}" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-table-list text-xs"></i> 15-talik monitoring
+                    </a>
+                    <a href="/district-assignments?district_id={{ current_user.district_id }}" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-clipboard-check text-xs"></i> Topshiriqlarim
+                    </a>
+                    <a href="/incidents?district_id={{ current_user.district_id }}" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved text-xs text-red-300"></i> 10 kunlik nazorat
+                    </a>
+                    {% else %}
+                    <a href="/" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-pie text-xs"></i> Bosh sahifa
+                    </a>
+                    <a href="/work-plans" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-list-check text-xs"></i> Ish rejalari
+                    </a>
+                    <a href="/work-plans/matrix" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-table-cells text-xs text-amber-300"></i> Matritsa & Tahlil
+                    </a>
+                    <a href="/ratings" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5 text-amber-300 font-bold">
+                        <i class="fa-solid fa-trophy text-xs text-amber-400"></i> KPI Reyting
+                    </a>
+                    <a href="/dynamics" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5 text-cyan-300 font-bold">
+                        <i class="fa-solid fa-chart-line text-xs text-cyan-400"></i> Dinamika
+                    </a>
+                    <a href="/district-assignments" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-building-flag text-xs"></i> Hududiy vazifalar
+                    </a>
+                    <a href="/monthly-15" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-table-list text-xs"></i> 15-talik monitoring
+                    </a>
+                    <a href="/incidents" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-shield-halved text-xs text-red-300"></i> 10 kunlik nazorat
+                    </a>
+                    <a href="/reports" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-word text-xs text-blue-300"></i> Hisobotlar
+                    </a>
+                    <a href="/admin/users" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5 text-yellow-300 font-bold bg-white/10">
+                        <i class="fa-solid fa-id-card-clip text-xs"></i> Hududlar & Parollar
+                    </a>
+                    <a href="/admin/audit" class="px-3 py-2 rounded-lg text-sm font-medium hover:bg-white/10 transition flex items-center gap-1.5 text-blue-100">
+                        <i class="fa-solid fa-clock-rotate-left text-xs text-amber-300"></i> Audit
+                    </a>
+                    {% endif %}
+                </nav>
+
+                <!-- Search trigger + Backup + Profile + Logout -->
+                <div class="flex items-center space-x-2.5">
+                    <!-- PWA Install Button -->
+                    <button id="btnInstallApp" onclick="installPwaApp()" class="hidden items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-slate-900 px-2.5 py-1.5 rounded-lg text-xs font-black transition shadow-sm animate-pulse">
+                        <i class="fa-solid fa-mobile-screen"></i>
+                        <span class="hidden md:inline">Ilovani o‘rnatish</span>
+                    </button>
+
+                    {% if not current_user or current_user.role != 'district' %}
+                    <!-- Global Search Button (Ctrl+K) -->
+                    <button onclick="openGlobalSearch()" class="hidden sm:flex items-center space-x-2 bg-white/15 hover:bg-white/25 px-3 py-1.5 rounded-lg text-xs font-medium text-white transition border border-white/20">
+                        <i class="fa-solid fa-magnifying-glass text-blue-200"></i>
+                        <span>Tezkor qidiruv</span>
+                        <kbd class="px-1.5 py-0.5 text-[10px] bg-white/20 rounded text-blue-100 font-mono">Ctrl+K</kbd>
+                    </button>
+
+                    <!-- Backup Button -->
+                    <a href="/api/admin/backup" title="Tizim zaxira nusxasini olish (ZIP)" class="bg-emerald-600 hover:bg-emerald-500 text-white p-2 rounded-lg text-xs font-semibold flex items-center gap-1 transition shadow-sm">
+                        <i class="fa-solid fa-download"></i>
+                        <span class="hidden md:inline">Zaxira (ZIP)</span>
+                    </a>
+                    {% endif %}
+
+                    <div class="text-right hidden sm:block pl-2 border-l border-white/20">
+                        <div class="text-xs font-bold leading-tight">{{ current_user.fio if current_user else 'Administrator' }}</div>
+                        <div class="text-[10px] text-blue-200">
+                            {% if current_user and current_user.role == 'district' %}
+                                {{ current_user.district_name }} mas’uli
+                            {% else %}
+                                Farg‘ona viloyati MMTB
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <a href="/logout" title="Tizimdan chiqish" class="bg-red-500/80 hover:bg-red-600 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-xs">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        <span class="hidden md:inline">Chiqish</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p>© 2026 Farg‘ona viloyati Maktabgacha va maktab ta’limi boshqarmasi. Barcha huquqlar himoyalangan.</p>
+            <div class="flex items-center space-x-4">
+                <a href="/reports/print-summary?month=8" target="_blank" class="text-blue-600 hover:underline flex items-center gap-1">
+                    <i class="fa-solid fa-print"></i> Majlis uchun chop etish
+                </a>
+                <span class="text-slate-300">|</span>
+                <a href="/admin/audit" class="text-slate-600 hover:underline">Harakatlar jurnali (Audit)</a>
+                <span class="text-slate-300">|</span>
+                <a href="https://t.me/fartarbiyamonitoring_bot" target="_blank" class="text-blue-500 hover:underline flex items-center gap-1">
+                    <i class="fa-brands fa-telegram"></i> @fartarbiyamonitoring_bot
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ==================== GLOBAL SEARCH (SPOTLIGHT) MODAL ==================== -->
+    <div id="searchModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-start justify-center pt-20 px-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden transform transition-all">
+            <!-- Search Input Box -->
+            <div class="relative border-b border-slate-200 p-4 flex items-center">
+                <i class="fa-solid fa-magnifying-glass text-slate-400 text-lg mr-3"></i>
+                <input type="text" id="globalSearchInput" placeholder="Tuman, maktab, o‘quvchi F.I.SH., buyruq yoki ish reja bandini qidiring..." 
+                       class="w-full text-base text-slate-800 placeholder-slate-400 focus:outline-none"
+                       oninput="handleGlobalSearch(this.value)">
+                <button onclick="closeGlobalSearch()" class="text-slate-400 hover:text-slate-600 px-2 py-1 rounded-lg text-sm">
+                    <kbd class="px-1.5 py-0.5 text-xs bg-slate-100 border border-slate-300 rounded font-mono">ESC</kbd>
+                </button>
+            </div>
+
+            <!-- Search Results Container -->
+            <div id="searchResultsList" class="max-h-96 overflow-y-auto p-4 space-y-2">
+                <p class="text-xs text-slate-400 text-center py-6">Qidirish uchun kamida 2 ta harf yoki raqam kiriting...</p>
+            </div>
+
+            <!-- Footer Hints -->
+            <div class="bg-slate-50 border-t border-slate-100 px-4 py-2 text-[11px] text-slate-500 flex justify-between">
+                <span>💡 Masalan: <b>"13-maktab"</b>, <b>"Azimov"</b>, <b>"Bog'dod"</b> yoki <b>"106-modda"</b></span>
+                <span>Yopish uchun <b>ESC</b></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== TUMAN PASPORTI (DOSSIER) GLOBAL MODAL ==================== -->
+    <div id="dossierModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden transform transition-all">
+            <div class="gradient-header text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-landmark"></i>
+                    </div>
+                    <div>
+                        <h3 id="dossierName" class="text-lg font-bold">Tuman Pasporti</h3>
+                        <p id="dossierSubtitle" class="text-xs text-blue-200">Hududiy ijro va monitoring ko‘rsatkichlari</p>
+                    </div>
+                </div>
+                <button onclick="closeDossierModal()" class="text-white/80 hover:text-white text-xl">&times;</button>
+            </div>
+
+            <div id="dossierBody" class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+                <div class="text-center py-8 text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-blue-600 mb-2"></i>
+                    <p class="text-xs">Ma’lumotlar yuklanmoqda...</p>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 px-6 py-3 border-t border-slate-200 flex justify-between items-center text-xs">
+                <span class="text-slate-500">Farg‘ona viloyati MMTB monitoring bazasi</span>
+                <button onclick="closeDossierModal()" class="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-lg transition">
+                    Yopish
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Keyboard Shortcut: Ctrl + K
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                openGlobalSearch();
+            }
+            if (e.key === 'Escape') {
+                closeGlobalSearch();
+                closeDossierModal();
+            }
+        });
+
+        function openGlobalSearch() {
+            document.getElementById('searchModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('globalSearchInput').focus(), 50);
+        }
+
+        function closeGlobalSearch() {
+            document.getElementById('searchModal').classList.add('hidden');
+        }
+
+        let searchDebounce = null;
+        function handleGlobalSearch(query) {
+            clearTimeout(searchDebounce);
+            const container = document.getElementById('searchResultsList');
+            if (!query || query.trim().length < 2) {
+                container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Qidirish uchun kamida 2 ta belgi kiriting...</p>';
+                return;
+            }
+
+            searchDebounce = setTimeout(async () => {
+                container.innerHTML = '<p class="text-xs text-blue-600 text-center py-6"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Qidirilmoqda...</p>';
+                try {
+                    const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                    const data = await res.json();
+                    if (!data.results || data.results.length === 0) {
+                        container.innerHTML = '<p class="text-xs text-slate-400 text-center py-6">Hech qanday ma’lumot topilmadi.</p>';
+                        return;
+                    }
+
+                    let html = '';
+                    data.results.forEach(r => {
+                        let clickAction = '';
+                        if (r.type === 'district') {
+                            clickAction = `onclick="closeGlobalSearch(); openDistrictDossier(${r.action_id})"`;
+                        } else if (r.type === 'incident') {
+                            clickAction = `onclick="closeGlobalSearch(); openStudentPassport('${r.title.replace(/'/g, "\\'")}', '')"`;
+                        } else {
+                            clickAction = `onclick="window.location.href='${r.url}'"`;
+                        }
+
+                        html += `
+                        <div ${clickAction} class="p-3 hover:bg-blue-50/80 rounded-xl cursor-pointer transition border border-transparent hover:border-blue-200 flex items-center justify-between group">
+                            <div class="space-y-0.5">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">${r.badge}</span>
+                                    <span class="text-sm font-bold text-slate-800 group-hover:text-blue-600 transition">${r.title}</span>
+                                </div>
+                                <p class="text-xs text-slate-500">${r.subtitle}</p>
+                            </div>
+                            <i class="fa-solid fa-arrow-right text-slate-300 group-hover:text-blue-600 transition text-xs"></i>
+                        </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                } catch(err) {
+                    container.innerHTML = '<p class="text-xs text-red-500 text-center py-4">Qidiruvda xatolik yuz berdi.</p>';
+                }
+            }, 250);
+        }
+
+        async function openDistrictDossier(districtId) {
+            document.getElementById('dossierModal').classList.remove('hidden');
+            const body = document.getElementById('dossierBody');
+            body.innerHTML = `
+                <div class="text-center py-8 text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-blue-600 mb-2"></i>
+                    <p class="text-xs">Ma’lumotlar yuklanmoqda...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch(`/api/districts/${districtId}/dossier`);
+                const data = await res.json();
+                if (data.status !== 'success') throw new Error();
+
+                const d = data.district;
+                document.getElementById('dossierName').innerText = `${d.name} — Yagona Pasporti`;
+                document.getElementById('dossierSubtitle').innerText = `Hudud kodi: ${d.code} | Toifasi: ${d.is_city ? 'Shahar' : 'Qishloq tumani'}`;
+
+                let incidentsHtml = '';
+                if (d.recent_incidents && d.recent_incidents.length > 0) {
+                    d.recent_incidents.forEach(inc => {
+                        const badgeColor = inc.days_remaining <= 3 ? 'bg-red-100 text-red-700 border-red-200' : 'bg-amber-100 text-amber-700 border-amber-200';
+                        incidentsHtml += `
+                        <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50 flex items-center justify-between text-xs">
+                            <div>
+                                <span class="font-bold text-slate-800">${inc.student_fio}</span> (${inc.school_name})
+                                <div class="text-slate-500 mt-0.5">Modda: ${inc.criminal_article || 'Ko‘rsatilmagan'} | Sana: ${inc.incident_date || 'Noma’lum'}</div>
+                            </div>
+                            <span class="px-2 py-0.5 rounded-md font-bold text-[11px] border ${badgeColor}">
+                                ${inc.days_remaining} kun qoldi
+                            </span>
+                        </div>`;
+                    });
+                } else {
+                    incidentsHtml = '<p class="text-xs text-slate-400 italic">Nazoratdagi favqulodda holatlar mavjud emas.</p>';
+                }
+
+                let tasksHtml = '';
+                if (d.assignments && d.assignments.length > 0) {
+                    d.assignments.forEach(t => {
+                        const stColor = t.status === 'Bajarildi' ? 'text-emerald-600' : 'text-amber-600';
+                        tasksHtml += `
+                        <div class="p-2.5 rounded-xl border border-slate-100 bg-slate-50 text-xs flex justify-between items-center">
+                            <div>
+                                <p class="font-semibold text-slate-800">${t.assignment_title}</p>
+                                <span class="text-slate-500">Muddati: ${t.deadline_date || 'Belgilanmagan'}</span>
+                            </div>
+                            <span class="font-bold ${stColor}">${t.status}</span>
+                        </div>`;
+                    });
+                } else {
+                    tasksHtml = '<p class="text-xs text-slate-400 italic">Faol hududiy vazifalar mavjud emas.</p>';
+                }
+
+                body.innerHTML = `
+                    <!-- Top stats 3-grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-blue-50 border border-blue-100">
+                            <span class="text-[11px] text-blue-600 font-semibold uppercase">Umumta’lim maktablari</span>
+                            <div class="text-2xl font-bold text-blue-900 mt-1">${d.schools_count} ta</div>
+                            <span class="text-xs text-blue-500 mt-1 block">MMTB tasarrufida</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-${d.risk_color === 'red' ? 'red' : 'emerald'}-50 border border-${d.risk_color === 'red' ? 'red' : 'emerald'}-100">
+                            <span class="text-[11px] text-${d.risk_color === 'red' ? 'red' : 'emerald'}-700 font-semibold uppercase">Jinoyat (2025 vs 2026)</span>
+                            <div class="text-2xl font-bold text-${d.risk_color === 'red' ? 'red' : 'emerald'}-900 mt-1">
+                                ${d.crime_2025} ➔ ${d.crime_2026}
+                            </div>
+                            <span class="text-xs font-semibold ${d.crime_diff > 0 ? 'text-red-600' : 'text-emerald-600'}">
+                                ${d.crime_diff > 0 ? '▲ +' + d.crime_diff + ' ta (Oshgan)' : (d.crime_diff < 0 ? '▼ ' + d.crime_diff + ' ta (Kamaygan)' : 'Teng')}
+                            </span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-purple-50 border border-purple-100">
+                            <span class="text-[11px] text-purple-700 font-semibold uppercase">Xavflilik Toifasi</span>
+                            <div class="text-base font-bold text-purple-900 mt-1">${d.risk_level}</div>
+                            <span class="text-xs text-purple-600 mt-1 block">Shoshilinch nazorat: ${d.urgent_incidents} ta</span>
+                        </div>
+                    </div>
+
+                    <!-- Incidents section -->
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-shield-halved text-red-500"></i> Voyaga yetmaganlar profilaktikasi (10 kunlik nazorat):
+                        </h4>
+                        <div class="space-y-2">
+                            ${incidentsHtml}
+                        </div>
+                    </div>
+
+                    <!-- Assignments section -->
+                    <div>
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-building-flag text-blue-500"></i> Hududga yuklatilgan o‘rganish topshiriqlari:
+                        </h4>
+                        <div class="space-y-2">
+                            ${tasksHtml}
+                        </div>
+                    </div>
+                `;
+            } catch(e) {
+                body.innerHTML = '<p class="text-xs text-red-500 text-center py-6">Pasport ma’lumotlarini yuklashda xatolik yuz berdi.</p>';
+            }
+        }
+
+        function closeDossierModal() {
+            document.getElementById('dossierModal').classList.add('hidden');
+        }
+
+        // ==================== YAGONA ELEKTRON PROFILAKTIK PASPORT ====================
+        async function openStudentPassport(fio, district = "") {
+            document.getElementById('studentPassportModal').classList.remove('hidden');
+            const body = document.getElementById('studentPassportBody');
+            document.getElementById('studentPassportFio').innerText = fio;
+            document.getElementById('studentPassportDistrict').innerText = district ? `Hudud: ${district}` : 'Farg‘ona viloyati';
+            
+            body.innerHTML = `
+                <div class="text-center py-8 text-slate-400">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-purple-600 mb-2"></i>
+                    <p class="text-xs">O‘quvchining barcha tizimlardagi profili jamlanmoqda...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch(`/api/students/unified-passport?fio=${encodeURIComponent(fio)}&district=${encodeURIComponent(district)}`);
+                const data = await res.json();
+                if (data.status !== 'success') throw new Error();
+
+                let incidentsHtml = '';
+                if (data.incidents && data.incidents.length > 0) {
+                    data.incidents.forEach(inc => {
+                        incidentsHtml += `
+                        <div class="p-3 rounded-xl border border-red-200 bg-red-50/50 text-xs space-y-1.5">
+                            <div class="flex justify-between items-start">
+                                <span class="font-bold text-red-900">${inc.criminal_article || 'JK moddasi qayd etilmagan'}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${inc.is_completed_in_10_days ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                                    ${inc.is_completed_in_10_days ? '✓ 10-kunlik chora ko‘rildi' : inc.days_remaining + ' kun qoldi'}
+                                </span>
+                            </div>
+                            <p class="text-slate-700 text-[11px] leading-relaxed"><b>Tafsilot:</b> ${inc.incident_details || 'Ko‘rsatilmagan'}</p>
+                            <div class="grid grid-cols-2 gap-2 text-[10px] text-slate-600 pt-1 border-t border-red-100">
+                                <div>Maktab mas’uli: <b>${inc.school_responsible_fio || 'Biriktirilmagan'}</b></div>
+                                <div>Profilaktika noziri: <b>${inc.inspector_fio || 'Biriktirilmagan'}</b></div>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    incidentsHtml = '<p class="text-xs text-slate-400 italic">Huquqbuzarliklar bo‘yicha qayd topilmadi.</p>';
+                }
+
+                let nominalHtml = '';
+                if (data.nominal_records && data.nominal_records.length > 0) {
+                    data.nominal_records.forEach(rec => {
+                        const info = rec.cells.slice(2).filter(c => c).join(' | ');
+                        nominalHtml += `
+                        <div class="p-2.5 rounded-xl border border-blue-100 bg-blue-50/40 text-xs flex justify-between items-center">
+                            <div>
+                                <span class="font-bold text-blue-900">${rec.sheet_name}</span>
+                                <p class="text-[11px] text-slate-600 mt-0.5">${info || 'Ma’lumot kiritilgan'}</p>
+                            </div>
+                            <span class="text-[10px] text-slate-400 font-semibold">${rec.district_name}</span>
+                        </div>`;
+                    });
+                } else {
+                    nominalHtml = '<p class="text-xs text-slate-400 italic">15-talik monitoring ro‘yxatlarida qayd etilmagan.</p>';
+                }
+
+                body.innerHTML = `
+                    <div class="space-y-4">
+                        <!-- Incidents Box -->
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-red-700 mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-shield-halved"></i> Voyaga yetmaganlar profilaktikasi & Jinoyatchilik:
+                            </h4>
+                            <div class="space-y-2">
+                                ${incidentsHtml}
+                            </div>
+                        </div>
+
+                        <!-- 15-talik Monitoring Box -->
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 mb-2 flex items-center gap-1.5">
+                                <i class="fa-solid fa-table-list"></i> 15-talik Oylik Monitoring Qaydlari:
+                            </h4>
+                            <div class="space-y-2">
+                                ${nominalHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } catch(e) {
+                body.innerHTML = '<p class="text-xs text-red-500 text-center py-6">Pasport ma’lumotlarini yuklashda xatolik yuz berdi.</p>';
+            }
+        }
+
+        function closeStudentPassportModal() {
+            document.getElementById('studentPassportModal').classList.add('hidden');
+        }
+
+        // PWA Service Worker Registration & Installation Prompt
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(reg => console.log('PWA ServiceWorker registered with scope:', reg.scope))
+                    .catch(err => console.log('PWA ServiceWorker registration failed:', err));
+            });
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const btn = document.getElementById('btnInstallApp');
+            if (btn) {
+                btn.classList.remove('hidden');
+                btn.classList.add('inline-flex');
+            }
+        });
+
+        function installPwaApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        const btn = document.getElementById('btnInstallApp');
+                        if (btn) btn.classList.add('hidden');
+                    }
+                    deferredPrompt = null;
+                });
+            } else {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Mobil Ilova Qilib O‘rnatish',
+                    html: '<p class="text-xs text-slate-600 mb-2">Ushbu platformani telefoningiz yoki kompyuteringizga ilova sifatida o‘rnatishingiz mumkin.</p><p class="text-xs text-slate-500">Brauzeringiz menyusini (⋮) oching va <b>"Bosh ekranga qo‘shish" (Add to Home screen)</b> yoki <b>"Ilovani o‘rnatish" (Install app)</b> tugmasini bosing.</p>',
+                    confirmButtonText: 'Tushundim'
+                });
+            }
+        }
+    </script>
+
+    <!-- Unified Student Passport Modal -->
+    <div id="studentPassportModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-gradient-to-r from-indigo-700 to-purple-800 text-white px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-id-card"></i>
+                    </div>
+                    <div>
+                        <h3 id="studentPassportFio" class="text-base font-bold"></h3>
+                        <p id="studentPassportDistrict" class="text-xs text-white/70"></p>
+                    </div>
+                </div>
+                <button onclick="closeStudentPassportModal()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+            <div id="studentPassportBody" class="p-6 overflow-y-auto space-y-4"></div>
+            <div class="p-4 border-t border-slate-100 flex justify-end bg-slate-50">
+                <button onclick="closeStudentPassportModal()" class="px-5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white hover:bg-slate-900 transition">
+                    Yopish
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+  <!-- Background Rounded Rect -->
+  <rect width="512" height="512" rx="110" fill="url(#bg)"/>
+  
+  <!-- Shield Outline -->
+  <path d="M256 64 L384 112 C384 272 256 368 256 432 C256 368 128 272 128 112 Z" fill="none" stroke="url(#gold)" stroke-width="18" stroke-linejoin="round"/>
+  
+  <!-- Open Book in Center -->
+  <path d="M256 220 C230 195 180 190 150 200 L150 310 C180 300 230 305 256 330 C282 305 332 300 362 310 L362 200 C332 190 282 195 256 220 Z" fill="#ffffff" fill-opacity="0.95"/>
+  <line x1="256" y1="220" x2="256" y2="330" stroke="#1e3a8a" stroke-width="6"/>
+
+  <!-- Star of Monitoring at Top -->
+  <polygon points="256,120 263,142 286,142 267,156 274,178 256,164 238,178 245,156 226,142 249,142" fill="url(#gold)"/>
+
+  <!-- Growth Chart Bars Inside -->
+  <rect x="200" y="250" width="14" height="40" rx="3" fill="#2563eb"/>
+  <rect x="225" y="235" width="14" height="55" rx="3" fill="#10b981"/>
+  <rect x="273" y="230" width="14" height="60" rx="3" fill="#10b981"/>
+  <rect x="298" y="245" width="14" height="45" rx="3" fill="#f59e0b"/>
+</svg>

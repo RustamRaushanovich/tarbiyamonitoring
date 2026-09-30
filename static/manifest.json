@@ -1,0 +1,19 @@
+{
+  "name": "Farg‘ona viloyati MMTB — Ijro Nazorati va Monitoring",
+  "short_name": "MMTB Nazorat",
+  "description": "Farg‘ona viloyati Maktabgacha va maktab ta’limi boshqarmasi Ijro nazorati, ish rejalari va 15-talik profilaktika monitoringi axborot tizimi",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0f172a",
+  "theme_color": "#1e3a8a",
+  "lang": "uz",
+  "icons": [
+    {
+      "src": "/static/img/logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

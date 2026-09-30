@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+
+{% block title %}Ish Rejalari Matritsasi va Hududlar Tahlili | Farg‘ona MMTB{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & KPIs -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-table-cells text-indigo-600"></i>
+                    Ish Rejalari Ijrosi Matritsasi va Avtomatik Tahlili
+                </h1>
+                <p class="text-xs text-slate-500 mt-1">19 ta tuman va shahar kesimida barcha bandlar ijrosi monitoringi va kompyuterdagi hujjatlar arxivi</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Curator Filter -->
+                <form method="get" action="/work-plans/matrix" class="flex items-center gap-2">
+                    <select name="curator" onchange="this.form.submit()" class="text-xs font-semibold px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700">
+                        <option value="all" {% if selected_curator == 'all' %}selected{% endif %}>Barcha mas’ullar</option>
+                        {% for c in curators %}
+                        <option value="{{ c.owner_fio }}" {% if selected_curator == c.owner_fio %}selected{% endif %}>{{ c.owner_fio }}</option>
+                        {% endfor %}
+                    </select>
+                </form>
+
+                <button onclick="downloadPlanExcel()" class="px-3.5 py-2 bg-emerald-600 text-white rounded-lg text-xs font-semibold hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-file-excel"></i> Excel tahlilini yuklash
+                </button>
+
+                <button onclick="openRootFolder()" class="px-3.5 py-2 bg-slate-800 text-white rounded-lg text-xs font-semibold hover:bg-slate-900 transition flex items-center gap-1.5 shadow-sm" title="E:\мониторинг\Hujjatlar_Baza">
+                    <i class="fa-solid fa-folder-open text-amber-400"></i> Kompyuterda bazani ochish
+                </button>
+            </div>
+        </div>
+
+        <!-- 4 KPI Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+            <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-3.5 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <div>
+                    <div class="text-[11px] text-blue-700 font-semibold uppercase">Jami Bandlar</div>
+                    <div class="text-lg font-bold text-slate-800">{{ matrix_data.stats.total_items }} ta</div>
+                </div>
+            </div>
+
+            <div class="bg-indigo-50/60 border border-indigo-100 rounded-xl p-3.5 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-building-flag"></i>
+                </div>
+                <div>
+                    <div class="text-[11px] text-indigo-700 font-semibold uppercase">Yuklatilgan topshiriqlar</div>
+                    <div class="text-lg font-bold text-slate-800">{{ matrix_data.stats.total_assigned }} ta</div>
+                </div>
+            </div>
+
+            <div class="bg-emerald-50/60 border border-emerald-100 rounded-xl p-3.5 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-check-double"></i>
+                </div>
+                <div>
+                    <div class="text-[11px] text-emerald-700 font-semibold uppercase">Topshirilgan hisobotlar</div>
+                    <div class="text-lg font-bold text-slate-800">{{ matrix_data.stats.total_submitted }} ta</div>
+                </div>
+            </div>
+
+            <div class="bg-amber-50/60 border border-amber-100 rounded-xl p-3.5 flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center font-bold text-sm">
+                    %
+                </div>
+                <div>
+                    <div class="text-[11px] text-amber-700 font-semibold uppercase">Umumiy Ijro Ko‘rsatkichi</div>
+                    <div class="text-lg font-bold text-slate-800">{{ matrix_data.stats.overall_percent }}%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matrix Legend -->
+    <div class="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600 bg-white p-3 rounded-xl border border-slate-200">
+        <span class="font-bold text-slate-800 mr-2">Belgilar:</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-emerald-500 text-white flex items-center justify-center text-[10px]">✓</span> Topshirilgan (Hujjat mavjud)</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-amber-400 text-white flex items-center justify-center text-[10px]">•</span> Kutilmoqda (Muddat bor)</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-red-500 text-white flex items-center justify-center text-[10px]">✗</span> Kechikkan (Muddati o‘tgan)</span>
+        <span class="inline-flex items-center gap-1.5"><span class="w-3.5 h-3.5 rounded bg-slate-200 text-slate-500 flex items-center justify-center text-[10px]">-</span> Yuklatilmagan</span>
+    </div>
+
+    <!-- The Big 19-District Matrix Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto max-h-[650px]">
+            <table class="w-full text-left border-collapse text-[11px] relative">
+                <thead class="sticky top-0 z-20">
+                    <tr class="bg-slate-800 text-white font-semibold uppercase tracking-wider text-[10px]">
+                        <th class="py-2.5 px-3 w-10 sticky left-0 z-30 bg-slate-800">№</th>
+                        <th class="py-2.5 px-2 w-14 sticky left-10 z-30 bg-slate-800">Band</th>
+                        <th class="py-2.5 px-3 min-w-[240px] sticky left-24 z-30 bg-slate-800">Tadbir mazmuni</th>
+                        <th class="py-2.5 px-2 w-24">Mas’ul</th>
+                        <th class="py-2.5 px-2 w-20">Muddat</th>
+                        <th class="py-2.5 px-2 w-14 text-center">Ijro %</th>
+                        {% for d in matrix_data.districts %}
+                        <th class="py-2.5 px-1.5 w-12 text-center whitespace-nowrap" title="{{ d.name }}">
+                            {{ d.name | replace(' tumani', '') | replace(' shahri', '') | truncate(6, True, '') }}
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for r in matrix_data.matrix_rows %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-2 px-3 font-bold text-slate-500 sticky left-0 bg-white z-10">{{ loop.index }}</td>
+                        <td class="py-2 px-2 font-bold text-indigo-700 sticky left-10 bg-white z-10">{{ r.item_code }}</td>
+                        <td class="py-2 px-3 font-medium text-slate-800 sticky left-24 bg-white z-10 max-w-[280px]">
+                            <div class="line-clamp-2" title="{{ r.task_description }}">{{ r.task_description }}</div>
+                        </td>
+                        <td class="py-2 px-2 text-slate-600 font-semibold whitespace-nowrap">{{ r.owner_fio }}</td>
+                        <td class="py-2 px-2 text-slate-500 whitespace-nowrap">{{ r.deadline_text }}</td>
+                        <td class="py-2 px-2 text-center font-bold 
+                            {% if r.percent == 100 %}text-emerald-600
+                            {% elif r.percent >= 50 %}text-amber-600
+                            {% else %}text-red-600{% endif %}">
+                            {{ r.percent }}%
+                        </td>
+
+                        {% for d in matrix_data.districts %}
+                        {% set st = r.districts_status[d.id] %}
+                        <td class="py-2 px-1 text-center">
+                            {% if st.status == 'Topshirildi' %}
+                            <button onclick="openAssignmentFolder({{ st.assignment_id }})" 
+                                    class="w-6 h-6 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 font-bold transition inline-flex items-center justify-center text-[10px]"
+                                    title="{{ d.name }}: Hisobot topshirilgan. Papkasini kompyuterda ochish">
+                                ✓
+                            </button>
+                            {% elif st.status == 'Kechikdi' %}
+                            <span class="w-6 h-6 rounded bg-red-100 text-red-700 font-bold inline-flex items-center justify-center text-[10px]"
+                                  title="{{ d.name }}: Muddat o‘tgan!">
+                                ✗
+                            </span>
+                            {% elif st.status == 'Kutilmoqda' %}
+                            <span class="w-6 h-6 rounded bg-amber-100 text-amber-700 font-bold inline-flex items-center justify-center text-[10px]"
+                                  title="{{ d.name }}: Jarayonda">
+                                •
+                            </span>
+                            {% else %}
+                            <span class="text-slate-300 font-bold">-</span>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- District Rankings -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-ranking-star text-amber-500"></i>
+            19 ta Tuman va Shaharlarning Ijro Intizomi Reytingi
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {% for rk in matrix_data.rankings %}
+            <div class="p-3.5 rounded-xl border border-slate-200/80 bg-slate-50/50 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-6 h-6 rounded-full font-bold text-xs flex items-center justify-center
+                        {% if loop.index <= 3 %}bg-amber-400 text-white
+                        {% elif loop.index >= 17 %}bg-red-500 text-white
+                        {% else %}bg-slate-200 text-slate-700{% endif %}">
+                        {{ loop.index }}
+                    </span>
+                    <div>
+                        <div class="font-bold text-xs text-slate-800">{{ rk.district_name }}</div>
+                        <div class="text-[10px] text-slate-500">
+                            Topshirdi: <b>{{ rk.submitted }}/{{ rk.assigned }}</b> ta 
+                            {% if rk.overdue > 0 %}<span class="text-red-600 font-bold">(Kechikkan: {{ rk.overdue }})</span>{% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-sm font-bold {% if rk.percent >= 80 %}text-emerald-600{% elif rk.percent >= 50 %}text-amber-600{% else %}text-red-600{% endif %}">
+                        {{ rk.percent }}%
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function openRootFolder() {
+        try {
+            const formData = new FormData();
+            formData.append('folder_path', '{{ base_storage_dir | escape }}');
+            const res = await fetch('/api/system/open-folder', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.status === 'success') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Kompyuterda papka ochildi!',
+                    text: data.path,
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            }
+        } catch(e) {
+            alert("Papkani ochishda xatolik: " + e.message);
+        }
+    }
+
+    async function openAssignmentFolder(assignmentId) {
+        try {
+            const formData = new FormData();
+            formData.append('assignment_id', assignmentId);
+            const res = await fetch('/api/system/open-folder', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.status === 'success') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Tuman papkasi kompyuterda ochildi!',
+                    text: data.path,
+                    showConfirmButton: false,
+                    timer: 3500
+                });
+            }
+        } catch(e) {
+            alert("Papkani ochishda xatolik: " + e.message);
+        }
+    }
+
+    async function downloadPlanExcel() {
+        Swal.fire({
+            title: 'Excel yaratilmoqda...',
+            text: 'Iltimos, kuting...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+        try {
+            const formData = new FormData();
+            formData.append('year', '{{ selected_year }}');
+            const res = await fetch('/api/reports/generate-plan-excel', { method: 'POST', body: formData });
+            const data = await res.json();
+            Swal.close();
+            if (data.status === 'success') {
+                window.location.href = data.download_url;
+            } else {
+                Swal.fire({ icon: 'error', title: 'Xatolik', text: data.detail || 'Generatsiya qilib bo‘lmadi' });
+            }
+        } catch (e) {
+            Swal.close();
+            alert("Xatolik: " + e.message);
+        }
+    }
+</script>
+{% endblock %}

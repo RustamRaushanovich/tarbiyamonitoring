@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Hududiy Vazifalar | Farg‘ona MMTB Ijro Nazorati{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Filter -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-building-flag text-indigo-600"></i>
+                Hududlar va Maktablarga Yuklatilgan O‘rganishlar
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Boshqarma ish rejalaridan hududiy mas’ullar va maktablarga tushgan topshiriqlar monitoringi</p>
+        </div>
+
+        <form method="get" action="/district-assignments" class="flex items-center gap-2">
+            <select name="district_id" onchange="this.form.submit()" class="text-xs font-semibold px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700">
+                <option value="0" {% if selected_district == 0 %}selected{% endif %}>Barcha tuman/shaharlar (19 ta)</option>
+                {% for d in districts %}
+                <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+
+    <!-- Assignments Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
+                        <th class="py-3 px-4 w-12">№</th>
+                        <th class="py-3 px-4 w-36">Hudud (Tuman/shahar)</th>
+                        <th class="py-3 px-4">Topshiriq / O‘rganish mavzusi</th>
+                        <th class="py-3 px-4 w-28">Ijro muddati</th>
+                        <th class="py-3 px-4 w-36">Biriktirgan kurator</th>
+                        <th class="py-3 px-4 w-32">Holati</th>
+                        <th class="py-3 px-4 w-32 text-center">Harakat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for a in assignments %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-4 font-bold text-slate-500">{{ loop.index }}</td>
+                        <td class="py-3 px-4 font-bold text-slate-800 flex items-center gap-1.5">
+                            <i class="fa-solid fa-location-dot text-indigo-500 text-xs"></i>
+                            {{ a.district_name }}
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="font-semibold text-slate-800">{{ a.assignment_title }}</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-2">{{ a.assignment_instructions }}</div>
+                        </td>
+                        <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">
+                            <i class="fa-regular fa-calendar text-slate-400 mr-1"></i>
+                            {{ a.deadline_date or 'Belgilanmagan' }}
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-slate-600">{{ a.assigned_by_fio or 'Boshqarma mas’uli' }}</td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold 
+                                {% if a.status == 'Hisobot topshirildi' %}bg-emerald-100 text-emerald-700
+                                {% elif a.status == 'Tasdiqlandi' %}bg-blue-100 text-blue-700
+                                {% elif a.status == 'Kechikdi' %}bg-red-100 text-red-700
+                                {% else %}bg-amber-100 text-amber-700{% endif %}">
+                                {{ a.status }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <button onclick="openSubmitProofModal({{ a.id }}, '{{ a.assignment_title | escape }}')" 
+                                    class="inline-flex items-center px-2.5 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold transition text-[11px]">
+                                <i class="fa-solid fa-cloud-arrow-up mr-1"></i> Hisobot yuklash
+                            </button>
+                            {% if a.proof_count > 0 or a.status in ['Hisobot topshirildi', 'Tasdiqlandi'] %}
+                            <button onclick="openExplorerFolder({{ a.id }})" 
+                                    class="inline-flex items-center px-2.5 py-1 rounded bg-slate-800 text-amber-400 hover:bg-slate-900 font-semibold transition text-[11px] ml-1 shadow-sm"
+                                    title="Kompyuterdagi tuman papkasini ochish">
+                                <i class="fa-solid fa-folder-open mr-1"></i> Papkani ochish
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="py-8 text-center text-slate-400 italic">Hozirda yuklatilgan hududiy topshiriqlar mavjud emas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal: Submit Proof -->
+<div id="proofModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b pb-3">
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up text-blue-600"></i>
+                Ijro hisoboti va fayllarni yuklash
+            </h3>
+            <button onclick="closeSubmitProofModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <form id="proofForm" class="space-y-3 text-xs" enctype="multipart/form-data">
+            <input type="hidden" id="proofAssignmentId" name="assignment_id">
+            
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Topshiriq nomi:</label>
+                <div id="proofAssignmentTitle" class="p-2.5 bg-slate-50 rounded-lg text-slate-700 border border-slate-200 font-medium"></div>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Bajarilgan ish yuzasidan batafsil ma’lumot / izoh:</label>
+                <textarea name="proof_text" rows="4" required placeholder="O‘rganish natijalari, ko‘rilgan choralar va xulosalar..." class="w-full p-2.5 border rounded-lg text-slate-700"></textarea>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-slate-700 mb-1">Tasdiqlovchi hujjatlar (Word, PDF, Excel, JPG):</label>
+                <input type="file" name="proof_files" multiple class="w-full p-2 border rounded-lg text-slate-700 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
+                <p class="text-[10px] text-slate-500 mt-1 flex items-center gap-1">
+                    <i class="fa-solid fa-circle-info text-blue-500"></i>
+                    Bir vaqtning o‘zida bir nechta fayl tanlashingiz mumkin. Barcha fayllar avtomatik kompyuterdagi tuman papkasiga yuklab saqlanadi.
+                </p>
+            </div>
+
+            <div class="pt-3 border-t flex justify-end gap-2">
+                <button type="button" onclick="closeSubmitProofModal()" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-600 font-medium hover:bg-slate-200">Bekor qilish</button>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-check text-xs"></i> Hisobotni kompyuterga saqlash
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function openSubmitProofModal(id, title) {
+        document.getElementById('proofAssignmentId').value = id;
+        document.getElementById('proofAssignmentTitle').innerText = title;
+        document.getElementById('proofModal').classList.remove('hidden');
+    }
+
+    function closeSubmitProofModal() {
+        document.getElementById('proofModal').classList.add('hidden');
+    }
+
+    async function openExplorerFolder(assignmentId) {
+        try {
+            const formData = new FormData();
+            formData.append('assignment_id', assignmentId);
+            const res = await fetch('/api/system/open-folder', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.status === 'success') {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Papka kompyuterda ochildi!',
+                    text: data.path,
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } else {
+                alert(data.message || "Papkani ochib bo'lmadi");
+            }
+        } catch(e) {
+            alert("Xatolik: " + e.message);
+        }
+    }
+
+    document.getElementById('proofForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        Swal.fire({
+            title: 'Fayllar kompyuterga saqlanmoqda...',
+            text: 'Iltimos, kuting...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        const res = await fetch('/api/district-assignments/submit-proof', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        Swal.close();
+
+        if (data.status === 'success') {
+            Swal.fire({
+                icon: 'success',
+                title: 'Hisobot qabul qilindi va kompyuterga saqlandi!',
+                html: `<b>Papkasi:</b><br><code class="text-xs text-slate-700 bg-slate-100 p-1 rounded">${data.folder_path}</code><br><br><span class="text-xs text-slate-500">${data.saved_files.length} ta fayl papkaga joylandi.</span>`,
+                confirmButtonColor: '#059669',
+                confirmButtonText: 'Tushunarli'
+            }).then(() => {
+                window.location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Xatolik',
+                text: data.detail || 'Xatolik yuz berdi'
+            });
+        }
+    });
+</script>
+{% endblock %}

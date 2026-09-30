@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: fergana-mmtb-monitoring
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python run.py
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: ENABLE_BOT
+        value: "true"
+      - key: GEMINI_MODEL
+        value: "gemini-3.5-flash-lite"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: ADMIN_TELEGRAM_IDS
+        sync: false

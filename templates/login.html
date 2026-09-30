@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tizimga Kirish | Farg‘ona viloyati MMTB</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-white min-h-screen flex flex-col justify-center selection:bg-blue-500 selection:text-white">
+
+    <div class="min-h-screen flex flex-col md:flex-row">
+
+        <!-- Left Half: Ministry Brand & Artwork (Exact design from user screenshot) -->
+        <div class="hidden md:flex md:w-7/12 relative overflow-hidden bg-cover bg-center items-center justify-center p-12 text-white"
+             style="background: linear-gradient(135deg, rgba(67, 44, 117, 0.92) 0%, rgba(30, 58, 138, 0.88) 100%), url('/static/img/login_left.png') center/cover no-repeat;">
+            
+            <div class="relative z-10 max-w-lg text-center space-y-6">
+                <!-- Ministry Emblem / Icon -->
+                <div class="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl mb-2">
+                    <i class="fa-solid fa-graduation-cap text-5xl text-yellow-300"></i>
+                </div>
+
+                <div class="space-y-2">
+                    <h1 class="text-2xl lg:text-3xl font-extrabold uppercase tracking-wider text-white drop-shadow-md">
+                        Maktabgacha va Maktab Ta’limi Vazirligi
+                    </h1>
+                    <p class="text-sm font-medium text-blue-100 tracking-wide">
+                        Farg‘ona viloyati maktabgacha va maktab ta’limi boshqarmasi
+                    </p>
+                </div>
+
+                <div class="pt-4 border-t border-white/20">
+                    <p class="text-xs text-blue-200 leading-relaxed">
+                        Ijro intizomi, oylik "15-talik" monitoring, 10-kunlik huquqbuzarliklar profilaktikasi va hududiy topshiriqlar yagona integratsiyalashgan axborot platformasi
+                    </p>
+                </div>
+
+                <!-- Live Badges -->
+                <div class="flex items-center justify-center gap-3 pt-2 text-[11px] font-semibold text-blue-100">
+                    <span class="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15">
+                        <i class="fa-solid fa-shield-halved text-emerald-300 mr-1"></i> Xavfsiz tizim
+                    </span>
+                    <span class="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15">
+                        <i class="fa-solid fa-building-flag text-amber-300 mr-1"></i> 19 ta tuman/shahar
+                    </span>
+                </div>
+            </div>
+
+            <!-- Soft background shapes -->
+            <div class="absolute -bottom-16 -left-16 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute -top-16 -right-16 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl pointer-events-none"></div>
+        </div>
+
+        <!-- Right Half: Clean White Login Form Card -->
+        <div class="w-full md:w-5/12 flex items-center justify-center p-6 sm:p-10 lg:p-16 bg-white">
+            <div class="w-full max-w-sm space-y-7">
+
+                <!-- Header Title -->
+                <div class="text-center space-y-1.5">
+                    <h2 class="text-2xl font-extrabold text-slate-900 tracking-tight">Tizimga Kirish</h2>
+                    <p class="text-xs text-slate-500 font-medium">Hisob ma’lumotlaringizni kiriting</p>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
+                    <!-- Username -->
+                    <div>
+                        <label for="username" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                            Foydalanuvchi nomi (login)
+                        </label>
+                        <div class="relative">
+                            <input type="text" id="username" name="username" required autofocus
+                                   placeholder="Masalan: buvayda yoki Azimov"
+                                   class="w-full text-xs font-medium px-3.5 py-3 rounded-xl border border-blue-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-xs">
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label for="password" class="block text-xs font-semibold text-slate-700 mb-1.5">
+                            Parol
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="password" name="password" required
+                                   placeholder="Parolni kiriting"
+                                   class="w-full text-xs font-medium px-3.5 py-3 pr-10 rounded-xl border border-slate-200 bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-xs">
+                            <button type="button" onclick="togglePasswordVisibility()" 
+                                    class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 text-xs">
+                                <i id="eyeIcon" class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button (Primary Blue, matching screenshot) -->
+                    <div class="pt-2">
+                        <button type="submit" id="submitBtn"
+                                class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold text-xs tracking-wide transition duration-150 shadow-md shadow-blue-500/25 flex items-center justify-center gap-2">
+                            <span>Kirish</span>
+                            <i class="fa-solid fa-arrow-right text-[11px]"></i>
+                        </button>
+                    </div>
+
+                    <!-- OR Divider -->
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-slate-200"></div>
+                        <span class="flex-shrink mx-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">ИЛИ</span>
+                        <div class="flex-grow border-t border-slate-200"></div>
+                    </div>
+
+                    <!-- ONE ID Button (Matching user screenshot) -->
+                    <div>
+                        <button type="button" onclick="quickOneIdDemo()"
+                                class="w-full py-2.5 px-4 rounded-xl bg-[#4f28a7] hover:bg-[#432091] text-white font-bold text-xs tracking-wider transition shadow-sm flex items-center justify-center gap-2">
+                            <span class="font-extrabold tracking-widest text-[11px] bg-white/20 px-1.5 py-0.5 rounded">ONE</span>
+                            <span class="font-bold text-[11px]">ID orqali kirish</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Helpful Quick Login Accordion for Demonstrations -->
+                <div class="pt-4 border-t border-slate-100">
+                    <button onclick="toggleQuickHints()" type="button" class="w-full text-center text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-circle-question"></i>
+                        <span>Login va parollar eslatmasi</span>
+                        <i id="hintChevron" class="fa-solid fa-chevron-down text-[10px]"></i>
+                    </button>
+
+                    <div id="quickHints" class="hidden mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] space-y-2 text-slate-600">
+                        <div>
+                            <span class="font-bold text-slate-800">👑 Viloyat Admin / Kuratorlari:</span>
+                            <div class="grid grid-cols-1 gap-1 mt-1 text-[10px]">
+                                <span class="cursor-pointer hover:text-blue-600 font-mono" onclick="fillCreds('Turdiyev', 'Turdiyev-123')">🔹 <b>Turdiyev</b> / Turdiyev-123</span>
+                                <span class="cursor-pointer hover:text-blue-600 font-mono" onclick="fillCreds('Azimov', 'Azimov-123')">🔹 <b>Azimov</b> / Azimov-123</span>
+                                <span class="cursor-pointer hover:text-blue-600 font-mono" onclick="fillCreds('Azamov', 'Azamov-123')">🔹 <b>Azamov</b> / Azamov-123</span>
+                            </div>
+                        </div>
+                        <div class="pt-1 border-t border-slate-200">
+                            <span class="font-bold text-slate-800">🏢 19 ta Tuman va Shaharlar:</span>
+                            <p class="text-[10px] text-slate-500 mt-0.5">Login: hudud nomi (masalan: <b>buvayda</b>, <b>margilon</b>, <b>fergana</b>, <b>qoqon</b>, <b>bagdod</b>, h.k.)</p>
+                            <p class="text-[10px] text-slate-500">Boshlang'ich parol: <b class="text-emerald-700 font-mono">123</b> (kirgach darhol yangilanadi)</p>
+                            <span class="cursor-pointer text-emerald-700 hover:underline font-mono text-[10px] block mt-1" onclick="fillCreds('buvayda', '123')">
+                                👉 Masalan: <b>buvayda</b> / <b>123</b> ni sinash
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center text-[10px] text-slate-400">
+                    © 2026 Farg‘ona viloyati MMTB Ijro Nazorati Axborot Tizimi
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function togglePasswordVisibility() {
+            const pwd = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            if (pwd.type === 'password') {
+                pwd.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                pwd.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function toggleQuickHints() {
+            const h = document.getElementById('quickHints');
+            const c = document.getElementById('hintChevron');
+            if (h.classList.contains('hidden')) {
+                h.classList.remove('hidden');
+                c.classList.remove('fa-chevron-down');
+                c.classList.add('fa-chevron-up');
+            } else {
+                h.classList.add('hidden');
+                c.classList.remove('fa-chevron-up');
+                c.classList.add('fa-chevron-down');
+            }
+        }
+
+        function fillCreds(u, p) {
+            document.getElementById('username').value = u;
+            document.getElementById('password').value = p;
+        }
+
+        function quickOneIdDemo() {
+            Swal.fire({
+                title: 'ONE ID Integratsiyasi',
+                text: 'Yagona identifikatsiya tizimi (OneID) orqali kirish davlat xizmatlari shlyuzi orqali tasdiqlanadi. Hozirda to‘g‘ridan-to‘g‘ri login-parol orqali kirishingiz mumkin.',
+                icon: 'info',
+                confirmButtonColor: '#4f28a7'
+            });
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                Swal.fire('Diqqat', 'Login va parolni to‘liq kiriting', 'warning');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Tekshirilmoqda...';
+
+            try {
+                const res = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await res.json();
+
+                if (data.status === 'success') {
+                    window.location.href = data.redirect_url || '/';
+                } else {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<span>Kirish</span> <i class="fa-solid fa-arrow-right text-[11px]"></i>';
+                    Swal.fire({
+                        title: 'Kirish rad etildi',
+                        text: data.detail || 'Login yoki parol noto‘g‘ri kiritildi',
+                        icon: 'error',
+                        confirmButtonColor: '#2563eb'
+                    });
+                }
+            } catch (err) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<span>Kirish</span> <i class="fa-solid fa-arrow-right text-[11px]"></i>';
+                Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik yuz berdi', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+
+{% block title %}10-kunlik Nazorat | Farg‘ona MMTB Ijro Nazorati{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Search -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-red-600"></i>
+                Voyaga Yetmaganlar Huquqbuzarligi va 10-kunlik Nazorat Jurnali
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Har bir hodisa yuzasidan 10 kun ichida maktab, MFY va profilaktika inspektori tomonidan ko‘rilgan choralar nazorati hamda Gemini AI tahlili</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            {% if current_user and current_user.role != 'district' %}
+            <button onclick="openMonthlyIncidentModal()" class="px-3.5 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-xs font-bold hover:from-purple-700 hover:to-indigo-700 transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Oylik Excel Yuklash (Smart Diff + AI)</span>
+            </button>
+            {% endif %}
+
+            <form method="get" action="/incidents" class="flex flex-wrap items-center gap-2">
+                <input type="text" name="search" value="{{ search }}" placeholder="F.I.Sh., maktab yoki modda..." class="text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700 w-44">
+                <select name="district_id" class="text-xs font-semibold px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-700">
+                    <option value="0" {% if selected_district == 0 %}selected{% endif %}>Barcha tumanlar</option>
+                    {% for d in districts %}
+                    <option value="{{ d.id }}" {% if selected_district == d.id %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="px-3.5 py-2 bg-blue-600 text-white rounded-lg text-xs font-semibold hover:bg-blue-700 transition">
+                    <i class="fa-solid fa-magnifying-glass"></i> Qidirish
+                </button>
+            </form>
+
+            <!-- Quick School-Time Filters -->
+            <div class="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-slate-100">
+                <span class="text-xs font-bold text-slate-500 mr-1"><i class="fa-solid fa-filter text-slate-400 mr-1"></i> Saralash:</span>
+                <a href="/incidents?district_id={{ selected_district }}&search={{ search }}" 
+                   class="px-3 py-1 rounded-lg text-xs font-semibold transition {% if school_time == -1 %}bg-slate-800 text-white shadow-sm{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                    Barchasi ({{ stats.total }})
+                </a>
+                <a href="/incidents?district_id={{ selected_district }}&search={{ search }}&school_time=1" 
+                   class="px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1.5 {% if school_time == 1 %}bg-red-600 text-white shadow-sm shadow-red-200{% else %}bg-red-50 text-red-700 hover:bg-red-100 border border-red-200{% endif %}">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    🚨 DARS VAQTIDA (08:00-14:00): {{ stats.school_cnt }} ta
+                </a>
+                <a href="/incidents?district_id={{ selected_district }}&search={{ search }}&school_time=0" 
+                   class="px-3 py-1 rounded-lg text-xs font-semibold transition {% if school_time == 0 %}bg-blue-600 text-white shadow-sm{% else %}bg-slate-100 text-slate-600 hover:bg-slate-200{% endif %}">
+                    🌙 Darsdan tashqari / Tungi: {{ stats.total - stats.school_cnt }} ta
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Incidents Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider">
+                        <th class="py-3 px-4 w-12">№</th>
+                        <th class="py-3 px-4 w-32">Hudud</th>
+                        <th class="py-3 px-4 w-40">Maktab / Sinf</th>
+                        <th class="py-3 px-4">O‘quvchi F.I.Sh.</th>
+                        <th class="py-3 px-4 w-28">JK moddasi</th>
+                        <th class="py-3 px-4 w-28 text-center">10-kunlik muddat</th>
+                        <th class="py-3 px-4 w-32 text-center">AI Tahlil & Xat</th>
+                        <th class="py-3 px-4 w-24 text-center">Kartochka</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for inc in incidents %}
+                    <tr class="hover:bg-slate-50/80 transition {% if inc.is_school_time %}bg-red-50/20{% elif inc.is_new %}bg-purple-50/40{% endif %}">
+                        <td class="py-3 px-4 font-bold text-slate-500">{{ inc.case_number }}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">{{ inc.district_name }}</td>
+                        <td class="py-3 px-4 text-slate-600 font-medium">{{ inc.school_name or 'Noma’lum maktab' }}</td>
+                        <td class="py-3 px-4 font-bold text-slate-800">
+                            {{ inc.student_fio }}
+                            {% if inc.is_new %}
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-purple-100 text-purple-800 border border-purple-200 ml-1">
+                                <i class="fa-solid fa-sparkles text-[9px] mr-1 text-purple-600"></i> Yangi
+                            </span>
+                            {% endif %}
+                            {% if inc.birth_date %}
+                            <span class="block text-[11px] font-normal text-slate-400">Tug‘ilgan: {{ inc.birth_date }}</span>
+                            {% endif %}
+
+                            {% if inc.is_school_time %}
+                            <div class="mt-1">
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-extrabold bg-red-100 text-red-800 border border-red-200">
+                                    <i class="fa-solid fa-bell text-[9px] mr-1 text-red-600"></i> {{ inc.school_time_badge }}
+                                    {% if inc.incident_weekday %}<span class="ml-1 text-red-600 font-semibold">({{ inc.incident_weekday }})</span>{% endif %}
+                                </span>
+                            </div>
+                            {% elif inc.school_time_badge and inc.school_time_badge != '⏳ Vaqti aniqlanmagan' %}
+                            <div class="mt-1">
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600">
+                                    <i class="fa-regular fa-clock text-[9px] mr-1 text-slate-400"></i> {{ inc.school_time_badge }}
+                                    {% if inc.incident_weekday %}<span class="ml-1 text-slate-400 font-normal">({{ inc.incident_weekday }})</span>{% endif %}
+                                </span>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="inline-block px-2 py-0.5 rounded bg-slate-100 font-semibold text-slate-700 text-[11px]">
+                                {{ inc.criminal_article or 'Qayd etilmagan' }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            {% if inc.is_completed_in_10_days %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">
+                                <i class="fa-solid fa-check mr-1"></i> Bajarildi
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold 
+                                {% if inc.days_remaining <= 2 %}bg-red-100 text-red-700 animate-pulse
+                                {% elif inc.days_remaining <= 5 %}bg-amber-100 text-amber-700
+                                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                <i class="fa-regular fa-clock mr-1"></i> {{ inc.days_remaining }} kun qoldi
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="openAiAnalysisModal({{ inc.id }})" 
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold transition text-[11px] border border-purple-200">
+                                <i class="fa-solid fa-brain text-purple-600"></i>
+                                {% if inc.ai_analysis %}
+                                <span>AI Tahlil</span>
+                                {% else %}
+                                <span>Tahlil qilish</span>
+                                {% endif %}
+                            </button>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <button onclick="viewIncidentDetails({{ inc.id }}, '{{ inc.student_fio | escape }}', '{{ inc.district_name | escape }}', '{{ inc.school_name | escape }}', '{{ inc.criminal_article | escape }}', '{{ inc.home_address | escape }}', '{{ inc.incident_details | escape }}', '{{ inc.school_responsible_fio | escape }}', '{{ inc.mfy_responsible_fio | escape }}', '{{ inc.inspector_fio | escape }}', '{{ inc.current_study_status | escape }}')" 
+                                    class="inline-flex items-center px-2.5 py-1 rounded bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-medium transition text-[11px]">
+                                <i class="fa-regular fa-id-card mr-1"></i> Ko‘rish
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="py-8 text-center text-slate-400 italic">Qidiruv bo‘yicha hodisalar topilmadi.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Modal: Incident Details Card -->
+<div id="incidentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between border-b pb-3">
+            <div>
+                <h3 id="cardStudentFio" class="font-bold text-slate-800 text-base"></h3>
+                <span id="cardDistrictSchool" class="text-xs text-blue-600 font-semibold"></span>
+            </div>
+            <button onclick="closeIncidentModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+            <div>
+                <span class="font-bold text-slate-700">Qo‘llanilgan JK moddasi:</span>
+                <span id="cardArticle" class="font-semibold text-red-600 ml-2"></span>
+            </div>
+
+            <div>
+                <span class="font-bold text-slate-700">Yashash manzili:</span>
+                <p id="cardAddress" class="p-2 bg-slate-50 rounded text-slate-600 mt-1"></p>
+            </div>
+
+            <div>
+                <span class="font-bold text-slate-700">Hodisa va tergov tafsilotlari (Fabula):</span>
+                <p id="cardDetails" class="p-3 bg-slate-50 rounded-lg text-slate-700 mt-1 leading-relaxed border border-slate-100 text-[11px]"></p>
+            </div>
+
+            <div class="border-t pt-3 space-y-2">
+                <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider">10-kunlik biriktirilgan mas’ullar:</h4>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <div class="p-2 bg-blue-50/50 rounded border border-blue-100">
+                        <span class="text-[10px] text-blue-600 font-semibold block">Maktab rahbariyati:</span>
+                        <span id="cardSchoolResp" class="font-semibold text-slate-700 text-[11px]"></span>
+                    </div>
+                    <div class="p-2 bg-purple-50/50 rounded border border-purple-100">
+                        <span class="text-[10px] text-purple-600 font-semibold block">MFY mas’uli:</span>
+                        <span id="cardMfyResp" class="font-semibold text-slate-700 text-[11px]"></span>
+                    </div>
+                    <div class="p-2 bg-emerald-50/50 rounded border border-emerald-100">
+                        <span class="text-[10px] text-emerald-600 font-semibold block">Profilaktika noziri:</span>
+                        <span id="cardInspector" class="font-semibold text-slate-700 text-[11px]"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <span class="font-bold text-slate-700">O‘quvchining hozirgi holati va to‘garakka jalb etilishi:</span>
+                <p id="cardCurrentStatus" class="p-2.5 bg-slate-50 rounded text-slate-700 mt-1 border border-slate-100 text-[11px]"></p>
+            </div>
+        </div>
+
+        <div class="pt-3 border-t flex justify-end">
+            <button onclick="closeIncidentModal()" class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 font-medium hover:bg-slate-200 text-xs">Yopish</button>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== MODAL 1: OYLIK EXCEL YUKLASH (SMART DIFF + AI) ==================== -->
+<div id="monthlyIncidentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b pb-3">
+            <div class="flex items-center gap-2 text-purple-700 font-bold text-base">
+                <i class="fa-solid fa-file-excel text-lg"></i>
+                <h3>Oylik Jinoyatchilik Jadvalini Yuklash</h3>
+            </div>
+            <button onclick="closeMonthlyIncidentModal()" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+        </div>
+
+        <div class="p-3 bg-purple-50 rounded-xl border border-purple-100 text-xs text-purple-900 space-y-1.5">
+            <div class="font-bold flex items-center gap-1.5 text-purple-800">
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Smart Taqqoslash va Yangilarini Ajratish:</span>
+            </div>
+            <p class="text-[11px] leading-relaxed text-slate-600">
+                Tizim yangi yuklangan faylni oldingi barcha oylardagi ma’lumotlar bilan solishtiradi. Avval bor bo‘lgan o‘quvchilar takrorlanmaydi, faqatgina <b>yangi aniqlangan jinoyatlar</b> ajratib olinadi va 10 kunlik muddat boshlanadi.
+            </p>
+        </div>
+
+        <form id="monthlyIncidentForm" onsubmit="handleMonthlyIncidentUpload(event)" class="space-y-4 text-xs">
+            <div>
+                <label class="block text-slate-700 font-bold mb-1.5">Oylik Excel fayli (.xlsx): <span class="text-red-500">*</span></label>
+                <input type="file" id="monthlyIncidentFileInput" accept=".xlsx,.xls" required
+                       class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 border border-slate-300 rounded-lg p-2 bg-slate-50 cursor-pointer">
+            </div>
+
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <label class="flex items-start gap-2.5 cursor-pointer">
+                    <input type="checkbox" id="autoAiCheckbox" checked class="mt-0.5 text-purple-600 rounded focus:ring-purple-500">
+                    <div>
+                        <span class="font-bold text-slate-800 block text-xs">Gemini AI orqali avtomatik tahlil qilish</span>
+                        <span class="text-[11px] text-slate-500 block mt-0.5">Yangi aniqlangan har bir holat bo‘yicha sabablar, tavsiyalar va 10 kunlik rasmiy talabnoma xatini AI darhol generatsiya qilsin.</span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="pt-3 border-t flex justify-end gap-2">
+                <button type="button" onclick="closeMonthlyIncidentModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                    Bekor qilish
+                </button>
+                <button type="submit" id="monthlyUploadBtn" class="px-5 py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Tahlil qilib yuklash</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== MODAL 2: GEMINI AI TAHLILI VA TALABNOMA XATI ==================== -->
+<div id="aiAnalysisModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-3xl w-full p-6 shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto">
+        <div class="flex items-start justify-between border-b pb-3">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-purple-600 to-indigo-600 text-white uppercase tracking-wider flex items-center gap-1">
+                        <i class="fa-solid fa-brain"></i> Gemini 3.5 Flash AI
+                    </span>
+                    <span id="aiRiskBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold"></span>
+                </div>
+                <h3 id="aiStudentFio" class="font-bold text-slate-800 text-lg mt-1"></h3>
+                <span id="aiDistrictSchool" class="text-xs text-slate-500 font-semibold"></span>
+            </div>
+            <button onclick="closeAiModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+        </div>
+
+        <div id="aiModalLoading" class="py-12 text-center space-y-3 hidden">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
+            <p class="text-xs font-bold text-purple-700">Gemini AI holatni tahlil qilmoqda va talabnoma tayyorlamoqda...</p>
+        </div>
+
+        <div id="aiModalContent" class="space-y-4 text-xs">
+            <!-- Asl Sabab -->
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200/90">
+                <div class="flex items-center gap-2 text-purple-900 font-bold mb-1.5">
+                    <i class="fa-solid fa-magnifying-glass-chart text-purple-600"></i>
+                    <span>1. Jinoyatning Asl Sababi va Salbiy Omillar:</span>
+                </div>
+                <p id="aiSababText" class="text-slate-700 leading-relaxed text-[11px]"></p>
+            </div>
+
+            <!-- Profilaktik Tavsiyalar -->
+            <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                <div class="flex items-center gap-2 text-blue-900 font-bold mb-2">
+                    <i class="fa-solid fa-clipboard-check text-blue-600"></i>
+                    <span>2. Maktab, MFY va Nozir Uchun 3 ta Amaliy Tavsiya:</span>
+                </div>
+                <ul id="aiTavsiyalarList" class="space-y-1.5 list-disc list-inside text-slate-700 text-[11px]"></ul>
+            </div>
+
+            <!-- Rasmiy Talabnoma Xati Loyihasi -->
+            <div class="p-4 bg-amber-50/50 rounded-xl border border-amber-200/80">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2 text-amber-900 font-bold">
+                        <i class="fa-solid fa-file-contract text-amber-700"></i>
+                        <span>3. Tuman Mudiriga 10-Kunlik Rasmiy Talabnoma Xati Loyihasi:</span>
+                    </div>
+                    <button type="button" onclick="copyAiLetter()" class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-amber-100 hover:bg-amber-200 text-amber-800 text-[11px] font-bold transition">
+                        <i class="fa-regular fa-copy"></i> Nusxa olish
+                    </button>
+                </div>
+                <div id="aiLetterText" class="p-3 bg-white rounded-lg border border-amber-200 text-slate-800 font-mono text-[11px] whitespace-pre-wrap leading-relaxed max-h-60 overflow-y-auto"></div>
+            </div>
+        </div>
+
+        <div class="pt-3 border-t flex items-center justify-between">
+            <button type="button" onclick="reAnalyzeCurrentIncident()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-100 hover:bg-purple-50 text-slate-700 hover:text-purple-700 border border-slate-200 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-arrows-rotate"></i>
+                <span>Qayta tahlil qilish (AI)</span>
+            </button>
+            <button onclick="closeAiModal()" class="px-5 py-2 rounded-xl bg-slate-800 text-white font-bold hover:bg-slate-900 text-xs transition">
+                Yopish
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentIncidentId = null;
+
+    function viewIncidentDetails(id, fio, dist, school, art, addr, details, sResp, mResp, insp, curStat) {
+        document.getElementById('cardStudentFio').innerText = fio;
+        document.getElementById('cardDistrictSchool').innerText = dist + ' | ' + school;
+        document.getElementById('cardArticle').innerText = art || 'Qayd etilmagan';
+        document.getElementById('cardAddress').innerText = addr || 'Manzil ko‘rsatilmagan';
+        document.getElementById('cardDetails').innerText = details || 'Tafsilot mavjud emas';
+        document.getElementById('cardSchoolResp').innerText = sResp || 'Biriktirilmagan';
+        document.getElementById('cardMfyResp').innerText = mResp || 'Biriktirilmagan';
+        document.getElementById('cardInspector').innerText = insp || 'Biriktirilmagan';
+        document.getElementById('cardCurrentStatus').innerText = curStat || 'Ma’lumot kiritilmagan';
+        document.getElementById('incidentModal').classList.remove('hidden');
+    }
+
+    function closeIncidentModal() {
+        document.getElementById('incidentModal').classList.add('hidden');
+    }
+
+    // ==================== MONTHLY EXCEL IMPORT ====================
+    function openMonthlyIncidentModal() {
+        document.getElementById('monthlyIncidentModal').classList.remove('hidden');
+    }
+
+    function closeMonthlyIncidentModal() {
+        document.getElementById('monthlyIncidentModal').classList.add('hidden');
+    }
+
+    async function handleMonthlyIncidentUpload(e) {
+        e.preventDefault();
+        const fileInp = document.getElementById('monthlyIncidentFileInput');
+        const autoAi = document.getElementById('autoAiCheckbox').checked;
+
+        if (!fileInp.files || fileInp.files.length === 0) {
+            Swal.fire('Diqqat', 'Iltimos, Excel faylni tanlang', 'warning');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInp.files[0]);
+        formData.append('auto_ai', autoAi ? 'true' : 'false');
+
+        Swal.fire({
+            title: 'Fayl tahlil qilinmoqda...',
+            text: autoAi ? 'Eski oylar bilan taqqoslanmoqda va Gemini AI orqali tahlil qilinmoqda...' : 'Eski oylar bilan taqqoslanmoqda...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const res = await fetch('/api/incidents/upload-monthly-excel', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                closeMonthlyIncidentModal();
+                Swal.fire({
+                    title: 'Muvaffaqiyatli yakunlandi!',
+                    html: `
+                        <div class="text-left text-xs space-y-2 p-2">
+                            <p class="font-bold text-slate-800">📊 Tahlil natijasi:</p>
+                            <div class="p-3 bg-purple-50 rounded-lg border border-purple-200 text-purple-900">
+                                <div>🆕 Yangi aniqlangan jinoyatlar: <b>${data.new_count} ta</b></div>
+                                <div>📁 Oldingi oylardagi mavjudlar: <b>${data.existing_count} ta</b></div>
+                                <div>📋 Jami ko‘rib chiqildi: <b>${data.total_rows} ta</b></div>
+                            </div>
+                            <p class="text-slate-500 text-[11px]">Barcha yangi holatlar bo‘yicha 10 kunlik muddat belgilandi.</p>
+                        </div>
+                    `,
+                    icon: 'success'
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.message || data.detail || 'Yuklashda xatolik yuz berdi', 'error');
+            }
+        } catch (err) {
+            Swal.close();
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik yuz berdi', 'error');
+        }
+    }
+
+    // ==================== GEMINI AI MODAL ====================
+    async function openAiAnalysisModal(id) {
+        currentIncidentId = id;
+        document.getElementById('aiAnalysisModal').classList.remove('hidden');
+        document.getElementById('aiModalLoading').classList.remove('hidden');
+        document.getElementById('aiModalContent').classList.add('hidden');
+
+        try {
+            const res = await fetch(`/api/incidents/${id}/ai-result`);
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                renderAiData(data);
+                // If not yet analyzed by AI, trigger it automatically!
+                if (!data.ai_analysis) {
+                    await reAnalyzeCurrentIncident(false);
+                } else {
+                    document.getElementById('aiModalLoading').classList.add('hidden');
+                    document.getElementById('aiModalContent').classList.remove('hidden');
+                }
+            } else {
+                Swal.fire('Xatolik', 'Ma’lumot topilmadi', 'error');
+                closeAiModal();
+            }
+        } catch (err) {
+            document.getElementById('aiModalLoading').classList.add('hidden');
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik yuz berdi', 'error');
+        }
+    }
+
+    function renderAiData(data) {
+        document.getElementById('aiStudentFio').innerText = data.student_fio;
+        document.getElementById('aiDistrictSchool').innerText = `${data.district_name} | ${data.school_name || 'Noma’lum maktab'} | ${data.article || ''}`;
+        
+        // Risk badge
+        const badge = document.getElementById('aiRiskBadge');
+        const risk = (data.ai_risk_level || 'O‘rta').trim();
+        badge.innerText = `Xavf: ${risk}`;
+        if (risk.toLowerCase().includes('yuqori')) {
+            badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 border border-red-200";
+        } else if (risk.toLowerCase().includes('past')) {
+            badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200";
+        } else {
+            badge.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 border border-amber-200";
+        }
+
+        // Sabab
+        document.getElementById('aiSababText').innerText = data.ai_analysis || "Asl sabab bo‘yicha tahlil hali o‘tkazilmagan.";
+
+        // Tavsiyalar
+        const tavList = document.getElementById('aiTavsiyalarList');
+        tavList.innerHTML = '';
+        if (data.ai_recommendations && data.ai_recommendations.length > 0) {
+            data.ai_recommendations.forEach(t => {
+                const li = document.createElement('li');
+                li.innerText = t;
+                tavList.appendChild(li);
+            });
+        } else {
+            tavList.innerHTML = '<li class="italic text-slate-400">Tavsiyalar mavjud emas</li>';
+        }
+
+        // Letter
+        document.getElementById('aiLetterText').innerText = data.ai_letter_draft || "Talabnoma xati loyihasi shakllantirilmagan.";
+    }
+
+    async function reAnalyzeCurrentIncident(showSwal = true) {
+        if (!currentIncidentId) return;
+
+        document.getElementById('aiModalLoading').classList.remove('hidden');
+        document.getElementById('aiModalContent').classList.add('hidden');
+
+        try {
+            const res = await fetch(`/api/incidents/${currentIncidentId}/analyze-ai`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            document.getElementById('aiModalLoading').classList.add('hidden');
+            document.getElementById('aiModalContent').classList.remove('hidden');
+
+            if (data.status === 'success') {
+                // Refresh data from result
+                const refreshRes = await fetch(`/api/incidents/${currentIncidentId}/ai-result`);
+                const refreshedData = await refreshRes.json();
+                renderAiData(refreshedData);
+                if (showSwal) {
+                    Swal.fire({
+                        title: 'Tahlil yakunlandi!',
+                        text: 'Gemini AI holatni qayta tahlil qildi va talabnomani yangiladi.',
+                        icon: 'success',
+                        timer: 1600,
+                        showConfirmButton: false
+                    });
+                }
+            } else {
+                Swal.fire('Xatolik', 'AI tahlilida xatolik yuz berdi', 'error');
+            }
+        } catch (err) {
+            document.getElementById('aiModalLoading').classList.add('hidden');
+            document.getElementById('aiModalContent').classList.remove('hidden');
+            Swal.fire('Xatolik', 'AI tahlilida server xatoligi yuz berdi', 'error');
+        }
+    }
+
+    function copyAiLetter() {
+        const text = document.getElementById('aiLetterText').innerText;
+        navigator.clipboard.writeText(text).then(() => {
+            Swal.fire({
+                title: 'Nusxa olindi!',
+                text: 'Talabnoma xati matni buferga nusxalandi.',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }).catch(err => {
+            Swal.fire('Xatolik', 'Nusxa olishda xatolik yuz berdi', 'error');
+        });
+    }
+
+    function closeAiModal() {
+        document.getElementById('aiAnalysisModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

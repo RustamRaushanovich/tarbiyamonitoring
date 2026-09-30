@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boshqarma Hay’at Yig‘ilishi Uchun Tahliliy Ma’lumotnoma — {{ month_name }} {{ year }}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Times+New+Roman&family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Times New Roman', serif; background-color: #f1f5f9; }
+        .document-page {
+            max-width: 210mm;
+            min-height: 297mm;
+            margin: 20px auto;
+            background: white;
+            padding: 20mm 20mm 20mm 25mm;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        @media print {
+            body { background: white !important; }
+            .no-print { display: none !important; }
+            .document-page {
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 15mm 15mm 15mm 20mm !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+        }
+    </style>
+</head>
+<body class="text-slate-900">
+
+    <!-- Top Action Bar (hidden on print) -->
+    <div class="no-print bg-slate-800 text-white py-3 px-6 sticky top-0 z-50 shadow flex justify-between items-center font-sans">
+        <div class="flex items-center space-x-3">
+            <span class="text-xs bg-blue-600 px-2.5 py-1 rounded font-semibold">Chop etish rejimi</span>
+            <span class="text-xs text-slate-300">A4 formatidagi rasmiy tahlilnoma</span>
+        </div>
+        <div class="flex items-center space-x-3">
+            <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 transition">
+                <i class="fa-solid fa-print"></i> Qog‘ozga yoki PDF ga chiqarish (Print)
+            </button>
+            <a href="/" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition">
+                Chiqish
+            </a>
+        </div>
+    </div>
+
+    <!-- Official Document Sheet -->
+    <div class="document-page">
+        
+        <!-- Header -->
+        <div class="text-center space-y-1 pb-4 border-b-2 border-slate-900">
+            <h3 class="text-sm font-bold uppercase tracking-wider">O‘zbekiston Respublikasi Maktabgacha va maktab ta’limi vazirligi</h3>
+            <h2 class="text-base font-extrabold uppercase">Farg‘ona viloyati Maktabgacha va maktab ta’limi boshqarmasi</h2>
+            <p class="text-xs italic text-slate-700 font-sans">Ijro intizomi va hududiy monitoring boshqarma markazi</p>
+        </div>
+
+        <div class="mt-6 text-center">
+            <h1 class="text-lg font-bold uppercase underline">Tahliliy Ma’lumotnoma</h1>
+            <p class="text-xs mt-1 text-slate-700">
+                Farg‘ona viloyati tuman va shaharlarida <b>{{ year }}-yil {{ month_name }} oyi</b> yakunlari bo‘yicha ijro intizomi, o‘quvchilar profilaktikasi va monitoring ko‘rsatkichlari to‘g‘risida
+            </p>
+        </div>
+
+        <!-- 3-box key summary -->
+        <div class="grid grid-cols-3 gap-3 my-6 font-sans text-xs">
+            <div class="p-3 border border-slate-300 rounded bg-slate-50 text-center">
+                <span class="text-slate-500 block">Jami Hududlar</span>
+                <span class="text-lg font-bold text-slate-800">19 ta</span>
+                <span class="text-[10px] text-emerald-600 font-semibold block mt-0.5">100% monitoring qamrovi</span>
+            </div>
+            <div class="p-3 border border-slate-300 rounded bg-slate-50 text-center">
+                <span class="text-slate-500 block">15-talik hisobot</span>
+                <span class="text-lg font-bold text-emerald-700">To‘liq topshirildi</span>
+                <span class="text-[10px] text-slate-500 block mt-0.5">18 ta yo‘nalish bo‘yicha</span>
+            </div>
+            <div class="p-3 border border-slate-300 rounded bg-slate-50 text-center">
+                <span class="text-slate-500 block">10-kunlik nazoratdagi</span>
+                <span class="text-lg font-bold text-red-600">188 ta holat</span>
+                <span class="text-[10px] text-red-600 font-semibold block mt-0.5">Qat’iy nazoratda</span>
+            </div>
+        </div>
+
+        <!-- Official Table of 19 Districts -->
+        <div class="mt-4">
+            <h4 class="text-xs font-bold uppercase text-slate-800 mb-2 font-sans">
+                1. Tuman va shaharlarning oylik ijro intizomi va huquqbuzarliklar reytingi:
+            </h4>
+            <table class="w-full text-xs border-collapse border border-slate-400">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-800">
+                        <th class="border border-slate-400 p-1.5 text-center w-10">№</th>
+                        <th class="border border-slate-400 p-1.5 text-left">Tuman / Shahar nomi</th>
+                        <th class="border border-slate-400 p-1.5 text-center w-24">2025-yil (8 oy)</th>
+                        <th class="border border-slate-400 p-1.5 text-center w-24">2026-yil (8 oy)</th>
+                        <th class="border border-slate-400 p-1.5 text-center w-20">Farqi (+/-)</th>
+                        <th class="border border-slate-400 p-1.5 text-center w-24">Topshiriq ijrosi</th>
+                        <th class="border border-slate-400 p-1.5 text-center w-16">Ball</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in districts %}
+                    <tr class="{% if loop.index <= 3 %}bg-emerald-50/50{% elif loop.index >= 17 %}bg-red-50/50{% endif %}">
+                        <td class="border border-slate-400 p-1.5 text-center font-bold">{{ d.rank }}</td>
+                        <td class="border border-slate-400 p-1.5 font-bold">{{ d.name }}</td>
+                        <td class="border border-slate-400 p-1.5 text-center">{{ d.j25 }} ta</td>
+                        <td class="border border-slate-400 p-1.5 text-center font-bold">{{ d.j26 }} ta</td>
+                        <td class="border border-slate-400 p-1.5 text-center font-bold 
+                            {% if d.diff > 0 %}text-red-700{% elif d.diff < 0 %}text-emerald-700{% endif %}">
+                            {% if d.diff > 0 %}+{{ d.diff }}{% else %}{{ d.diff }}{% endif %}
+                        </td>
+                        <td class="border border-slate-400 p-1.5 text-center">{{ d.done_tasks }}/{{ d.total_tasks }} ta</td>
+                        <td class="border border-slate-400 p-1.5 text-center font-bold">{{ d.score }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Notes / Decisions -->
+        <div class="mt-6 text-xs leading-relaxed space-y-2">
+            <h4 class="font-bold uppercase font-sans">2. Boshqarma Hay’ati muhokamasi uchun takliflar:</h4>
+            <p>1. Reytingda yuqori natija ko‘rsatgan hamda huquqbuzarliklar salbiy o‘sishiga yo‘l qo‘ymagan tumanlar MMTB mudirlari ish tajribasi ommalashtirilsin.</p>
+            <p>2. Jinoyat ko‘rsatkichi oshgan tuman/shaharlarda (ayniqsa 10-kunlik favqulodda profilaktika choralari kechiktirilgan maktablarda) zudlik bilan xizmat tekshiruvi o‘tkazilsin va shaxsiy javobgarlik choralari ko‘rilsin.</p>
+        </div>
+
+        <!-- Signatures -->
+        <div class="mt-12 pt-6 border-t border-slate-300 flex justify-between items-end text-xs font-sans">
+            <div>
+                <p class="font-bold">Boshqarma boshlig‘i:</p>
+                <p class="text-slate-500 mt-6">(imzo / muhr)</p>
+            </div>
+            <div class="text-right">
+                <p class="font-bold">Monitoring va tahlil bo‘limi mas’uli:</p>
+                <p class="text-slate-500 mt-6">A. Azimov / R. Turdiyev</p>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>

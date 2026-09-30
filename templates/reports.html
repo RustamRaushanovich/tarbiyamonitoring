@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Hisobotlar Markazi | Farg‘ona MMTB Ijro Nazorati{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-solid fa-file-invoice text-blue-600"></i>
+                Oylik Tahliliy Hisobotlar Markazi
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">Har bir oy bo‘yicha turlari ajratilgan rasmiy Word (.docx) va Excel (.xlsx) hisobotlarini shakllantirish</p>
+        </div>
+
+        <div class="flex items-center gap-2 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-200 text-xs font-bold text-blue-800">
+            <i class="fa-regular fa-calendar-check text-blue-600"></i>
+            Tanlangan davr: {{ selected_month_name }} {{ selected_year }}
+        </div>
+    </div>
+
+    <!-- Month-by-Month Selector (Oyma-oy tanlash) -->
+    <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm space-y-2">
+        <div class="flex items-center justify-between px-1">
+            <span class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-calendar-days text-indigo-500"></i> Kerakli oyni tanlang:
+            </span>
+            <span class="text-[11px] text-slate-400">12 oylik kalendar tsikli</span>
+        </div>
+
+        <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 text-center text-xs">
+            {% for m in months %}
+            <a href="/reports?month={{ m.num }}&year={{ selected_year }}" 
+               class="p-2.5 rounded-xl border transition flex flex-col items-center justify-center gap-1
+               {% if m.is_selected %}bg-blue-600 text-white font-bold border-blue-700 shadow-md ring-2 ring-blue-300
+               {% else %}bg-slate-50 text-slate-700 border-slate-200 hover:bg-blue-50 hover:border-blue-300{% endif %}">
+                <span class="text-xs font-semibold">{{ m.name }}</span>
+                <span class="text-[9px] px-1.5 py-0.2 rounded-full 
+                    {% if m.is_selected %}bg-white/20 text-white
+                    {% elif m.status_badge == 'Yakunlangan' %}bg-emerald-100 text-emerald-700
+                    {% elif m.status_badge == 'Faol' %}bg-amber-100 text-amber-700 animate-pulse
+                    {% else %}bg-slate-200 text-slate-500{% endif %}">
+                    {{ m.status_badge }}
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 4 Report Type Cards for Selected Month -->
+    <div>
+        <div class="flex items-center justify-between mb-3 px-1">
+            <h3 class="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                <i class="fa-solid fa-layer-group text-blue-600 mr-1.5"></i>
+                {{ selected_month_name }} oyi bo‘yicha hisobot turlari:
+            </h3>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            <!-- 1. Word Analytical Report -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-blue-400 transition flex flex-col justify-between space-y-4">
+                <div class="space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-file-word"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider block">Boshqarma Hay’ati uchun</span>
+                        <h4 class="text-sm font-bold text-slate-800 mt-0.5">Tahliliy Ma’lumotnoma (Word)</h4>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            {{ selected_month_name }} oyi bo‘yicha 19 ta tuman jinoyatchilik dinamikasi, taqqoslama ko‘rsatkichlar va xulosalar.
+                        </p>
+                    </div>
+                </div>
+                <button onclick="generateReport('word')" class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-download"></i> Word hisobotni olish
+                </button>
+            </div>
+
+            <!-- 2. 15-talik Master Excel -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-emerald-400 transition flex flex-col justify-between space-y-4">
+                <div class="space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-file-excel"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-emerald-600 uppercase tracking-wider block">Vazirlik uchun</span>
+                        <h4 class="text-sm font-bold text-slate-800 mt-0.5">Oylik «15-talik» Kitobi (Excel)</h4>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            Barcha 18 ta varaq: notinch oilalar, ichki nazorat, profilaktika va targ‘ibot hisoboti to‘liq formatda.
+                        </p>
+                    </div>
+                </div>
+                <button onclick="generateReport('excel')" class="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-download"></i> 15-talik Excelni olish
+                </button>
+            </div>
+
+            <!-- 3. Incidents Registry -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-red-400 transition flex flex-col justify-between space-y-4">
+                <div class="space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-red-600 uppercase tracking-wider block">Huquq-tartibot nazorati</span>
+                        <h4 class="text-sm font-bold text-slate-800 mt-0.5">Huquqbuzarliklar Reyestri</h4>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            {{ selected_month_name }} oyi bo‘yicha voyaga yetmaganlar, maktablar, JK moddalari va 10 kunlik nazorat jurnali.
+                        </p>
+                    </div>
+                </div>
+                <button onclick="generateReport('incidents')" class="w-full py-2 px-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-download"></i> Reyestrni yuklab olish
+                </button>
+            </div>
+
+            <!-- 4. Discipline Rating -->
+            <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 hover:border-purple-400 transition flex flex-col justify-between space-y-4">
+                <div class="space-y-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-ranking-star"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold text-purple-600 uppercase tracking-wider block">Hokimlik va Boshqarma uchun</span>
+                        <h4 class="text-sm font-bold text-slate-800 mt-0.5">Ijro Intizomi Reytingi</h4>
+                        <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                            19 ta tuman/shahar bo‘yicha topshiriqlar bajarilishi va o‘z vaqtida hisobot topshirish ko‘rsatkichlari reytingi.
+                        </p>
+                    </div>
+                </div>
+                <button onclick="generateReport('rating')" class="w-full py-2 px-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-semibold text-xs transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-download"></i> Reytingni yuklab olish
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Generated Files Archive -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
+        <h3 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left text-slate-500"></i>
+            Shakllantirilgan tayyor hisobotlar arxivi
+        </h3>
+
+        <div class="divide-y divide-slate-100 text-xs">
+            {% for f in files %}
+            <div class="py-3 flex items-center justify-between hover:bg-slate-50 px-2 rounded-lg transition">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid {% if '.docx' in f.name %}fa-file-word text-blue-600{% else %}fa-file-excel text-emerald-600{% endif %} text-lg"></i>
+                    <div>
+                        <div class="font-bold text-slate-800">{{ f.name }}</div>
+                        <div class="text-[11px] text-slate-400">Hajmi: {{ f.size }} | Vaqti: {{ f.date }}</div>
+                    </div>
+                </div>
+                <a href="/exports/{{ f.name }}" class="inline-flex items-center px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 font-semibold transition gap-1.5">
+                    <i class="fa-solid fa-download"></i> Yuklab olish
+                </a>
+            </div>
+            {% else %}
+            <p class="text-slate-400 py-4 italic text-center">Hozirda shakllantirilgan hisobot fayllari mavjud emas.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function generateReport(type) {
+        const month = {{ selected_month }};
+        const year = {{ selected_year }};
+        const monthName = "{{ selected_month_name }}";
+
+        let endpoint = '';
+        let titleText = '';
+
+        if (type === 'word') {
+            endpoint = '/api/reports/generate-word';
+            titleText = monthName + ' oyi Word tahlilnomasi tayyorlanmoqda...';
+        } else if (type === 'excel') {
+            endpoint = '/api/reports/generate-excel';
+            titleText = monthName + ' oyi 15-talik Excel kitobi jamlanmoqda...';
+        } else if (type === 'incidents') {
+            endpoint = '/api/reports/generate-incidents';
+            titleText = monthName + ' oyi huquqbuzarliklar reyestri shakllantirilmoqda...';
+        } else if (type === 'rating') {
+            endpoint = '/api/reports/generate-rating';
+            titleText = monthName + ' oyi ijro intizomi reytingi hisoblanmoqda...';
+        }
+
+        Swal.fire({
+            title: titleText,
+            text: 'Iltimos, kuting...',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        const formData = new FormData();
+        formData.append('month', month);
+        formData.append('year', year);
+
+        try {
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Hisobot tayyor!',
+                    text: 'Fayl yuklab olinmoqda',
+                    confirmButtonColor: '#2563eb'
+                }).then(() => {
+                    window.location.href = data.download_url;
+                    setTimeout(() => window.location.reload(), 1500);
+                });
+            } else {
+                Swal.fire('Xatolik', 'Hisobot yaratishda xatolik yuz berdi', 'error');
+            }
+        } catch (err) {
+            Swal.fire('Xatolik', err.message, 'error');
+        }
+    }
+</script>
+{% endblock %}

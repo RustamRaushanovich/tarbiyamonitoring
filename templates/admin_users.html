@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Hududlar Foydalanuvchilari va Parollari | Boshqaruv{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
+                    <i class="fa-solid fa-users-gear mr-1"></i> Xavfsizlik & Kirish Nazorati
+                </span>
+                <span class="text-xs text-slate-400">|</span>
+                <span class="text-xs font-semibold text-slate-500">19 ta Tuman va Shahar</span>
+            </div>
+            <h1 class="text-xl font-bold text-slate-900 mt-1 flex items-center gap-2">
+                <i class="fa-solid fa-id-card-clip text-blue-600"></i>
+                Hududlar Foydalanuvchi Hisoblari va Parollari Reestri
+            </h1>
+            <p class="text-xs text-slate-500 mt-0.5">
+                Ushbu bo‘lim orqali tuman/shahar mas’ullarining login va parollarini nazorat qilish, ko‘rish va kerak bo‘lganda parolni "123" ga qayta tiklash mumkin.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-2.5">
+            <button onclick="copyAllCredentials()" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition border border-slate-300 gap-2">
+                <i class="fa-solid fa-copy"></i>
+                Barcha login-parollarni nusxalash
+            </button>
+            <button onclick="exportCredentialsTable()" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition shadow-sm gap-2">
+                <i class="fa-solid fa-file-excel"></i>
+                Ro‘yxatni yuklab olish
+            </button>
+        </div>
+    </div>
+
+    <!-- Credentials Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-slate-50/50">
+            <div class="text-xs font-bold text-slate-700 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                <span>Jami 19 ta hududiy hisoblar to‘liq faol</span>
+            </div>
+            <div class="relative w-64">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                <input type="text" id="userSearch" onkeyup="filterUserTable()" placeholder="Tumanni qidirish..." 
+                       class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table id="userTable" class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200">
+                    <tr>
+                        <th class="py-3 px-4 text-center">№</th>
+                        <th class="py-3 px-4">Tuman / Shahar nomi</th>
+                        <th class="py-3 px-4">Foydalanuvchi nomi (Login)</th>
+                        <th class="py-3 px-4">Joriy Parol</th>
+                        <th class="py-3 px-4 text-center">Parol Holati</th>
+                        <th class="py-3 px-4 text-center">Topshiriqlar</th>
+                        <th class="py-3 px-4 text-center">Huquqbuzarliklar</th>
+                        <th class="py-3 px-4 text-center">Harakat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    {% for u in users %}
+                    <tr class="hover:bg-slate-50/80 transition" data-district="{{ u.district_name }}">
+                        <td class="py-3 px-4 text-center font-bold text-slate-400">{{ loop.index }}</td>
+                        <td class="py-3 px-4 font-bold text-slate-900">
+                            <i class="fa-solid fa-building-flag text-blue-500 mr-1.5"></i>
+                            {{ u.district_name }}
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-200">
+                                {{ u.username }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <div class="inline-flex items-center gap-2">
+                                <span id="pwd-{{ u.id }}" class="font-mono font-bold text-slate-800 bg-slate-100 px-2 py-1 rounded border border-slate-200">
+                                    {{ u.password_plain or '123' }}
+                                </span>
+                                <button onclick="copyToClipboard('{{ u.username }}', '{{ u.password_plain or '123' }}')" 
+                                        title="Login va parolni nusxalash" 
+                                        class="text-slate-400 hover:text-blue-600 transition text-xs">
+                                    <i class="fa-regular fa-copy"></i>
+                                </button>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            {% if u.must_change_password %}
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                <i class="fa-solid fa-clock mr-0.5"></i> 123 (Yangilash kutilmoqda)
+                            </span>
+                            {% else %}
+                            <span class="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                <i class="fa-solid fa-check-double mr-0.5"></i> Yangilangan
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 px-4 text-center font-semibold text-slate-600">
+                            {{ u.task_count or 0 }} ta
+                        </td>
+                        <td class="py-3 px-4 text-center font-semibold text-slate-600">
+                            {{ u.incident_count or 0 }} ta
+                        </td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <button onclick="resetPassword({{ u.id }}, '{{ u.district_name }}', '{{ u.username }}')" 
+                                    class="px-2.5 py-1 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 font-bold text-[11px] border border-red-200 transition shadow-2xs flex items-center gap-1 mx-auto">
+                                <i class="fa-solid fa-arrow-rotate-left"></i>
+                                <span>Parolni "123" ga qaytarish</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function filterUserTable() {
+        const q = document.getElementById('userSearch').value.toLowerCase();
+        const trs = document.querySelectorAll('#userTable tbody tr');
+        trs.forEach(tr => {
+            const txt = tr.innerText.toLowerCase();
+            tr.style.display = txt.includes(q) ? '' : 'none';
+        });
+    }
+
+    function copyToClipboard(u, p) {
+        const text = `Login: ${u}\nParol: ${p}`;
+        navigator.clipboard.writeText(text);
+        Swal.fire({
+            title: 'Nusxalandi!',
+            text: `${u} hisobi ma’lumotlari buferga nusxalandi.`,
+            icon: 'success',
+            timer: 1200,
+            showConfirmButton: false
+        });
+    }
+
+    function copyAllCredentials() {
+        const trs = document.querySelectorAll('#userTable tbody tr');
+        let txt = "FARG‘ONA VILOYATI MMTB — HUDUDLAR LOGIN VA PAROLLARI RO‘YXATI:\n\n";
+        trs.forEach((tr, i) => {
+            const cells = tr.querySelectorAll('td');
+            if (cells.length >= 4) {
+                const dist = cells[1].innerText.trim();
+                const uname = cells[2].innerText.trim();
+                const pwd = cells[3].innerText.trim();
+                txt += `${i + 1}. ${dist} | Login: ${uname} | Parol: ${pwd}\n`;
+            }
+        });
+
+        navigator.clipboard.writeText(txt);
+        Swal.fire({
+            title: 'Barchasi nusxalandi!',
+            text: '19 ta tuman login va parollari to‘liq buferga nusxalandi. Telegram yoki xat orqali yuborishingiz mumkin.',
+            icon: 'success'
+        });
+    }
+
+    function exportCredentialsTable() {
+        let csv = "№,Tuman nomi,Login,Parol\n";
+        const trs = document.querySelectorAll('#userTable tbody tr');
+        trs.forEach((tr, i) => {
+            const cells = tr.querySelectorAll('td');
+            if (cells.length >= 4) {
+                const dist = cells[1].innerText.trim().replace(/,/g, '');
+                const uname = cells[2].innerText.trim();
+                const pwd = cells[3].innerText.trim();
+                csv += `${i + 1},${dist},${uname},${pwd}\n`;
+            }
+        });
+
+        const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Fargona_MMTB_Tumanlar_Login_Parollari_${new Date().toISOString().slice(0,10)}.csv`;
+        a.click();
+    }
+
+    async function resetPassword(userId, districtName, username) {
+        const confirm = await Swal.fire({
+            title: 'Parolni tiklashni tasdiqlaysizmi?',
+            text: `${districtName} (${username}) paroli "123" ga qaytariladi va keyingi kirishda yangilash talab qilinadi.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ha, 123 ga qaytarilsin',
+            cancelButtonText: 'Bekor qilish'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        try {
+            const res = await fetch('/api/admin/reset-district-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId })
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: 'Muvaffaqiyatli tiklandi!',
+                    text: data.message,
+                    icon: 'success',
+                    timer: 1600,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.detail || 'Xatolik yuz berdi', 'error');
+            }
+        } catch (e) {
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik', 'error');
+        }
+    }
+</script>
+{% endblock %}

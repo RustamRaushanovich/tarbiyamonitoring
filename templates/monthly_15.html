@@ -1,0 +1,1132 @@
+{% extends "base.html" %}
+
+{% block title %}15-talik Oylik Monitoring | Farg‘ona MMTB Ijro Nazorati{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header & Action -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+        <div>
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-full text-[11px] font-bold {% if is_nominal %}bg-purple-100 text-purple-700 border border-purple-200{% else %}bg-emerald-100 text-emerald-700 border border-emerald-200{% endif %}">
+                    <i class="fa-solid {% if is_nominal %}fa-users-line{% else %}fa-chart-pie{% endif %} mr-1"></i>
+                    {% if is_nominal %}Nomma-nom Ro‘yxat (F.I.Sh){% else %}Svod / Statistik Jadval{% endif %}
+                </span>
+                <span class="text-xs text-slate-400">|</span>
+                <span class="text-xs font-semibold text-slate-500">2026-yil Avgust oyi</span>
+            </div>
+            <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2 mt-1">
+                <i class="fa-solid fa-table-list text-emerald-600"></i>
+                Oylik "15-talik" Monitoring Kitobi
+            </h1>
+            <p class="text-xs text-slate-500 mt-1">19 ta tuman va shahar mas’ullari o‘z ma’lumotlarini to‘g‘ridan-to‘g‘ri kiritishi va tahrirlashi mumkin</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+            {% if is_nominal %}
+            <button onclick="downloadNominalTemplate()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs transition border border-slate-300 gap-1.5" title="Ushbu varaq uchun bo‘sh Excel shablon">
+                <i class="fa-solid fa-file-arrow-down text-emerald-600"></i> Shablonni yuklab olish
+            </button>
+            <button onclick="openNominalExcelImportModal()" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-teal-600 text-white hover:bg-teal-700 font-bold text-xs transition shadow-sm gap-2">
+                <i class="fa-solid fa-file-import"></i> Exceldan F.I.Sh import qilish
+            </button>
+            <button onclick="openNominalAddModal()" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-purple-600 text-white hover:bg-purple-700 font-bold text-xs transition shadow-sm gap-2">
+                <i class="fa-solid fa-user-plus"></i> Yangi o‘quvchi qo‘shish
+            </button>
+            {% elif selected_district != 'all' %}
+            <button onclick="openSvodEditForSelectedDistrict()" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs transition shadow-sm gap-2">
+                <i class="fa-solid fa-pen-to-square"></i> {{ selected_district }} ma'lumotlarini kiritish
+            </button>
+            {% endif %}
+
+            <button onclick="openExcelUploadModal()" class="inline-flex items-center px-3.5 py-2.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-xs transition border border-blue-200 gap-1.5">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Yangi Excel yuklash
+            </button>
+            <button onclick="downloadExcelReport()" class="inline-flex items-center px-4 py-2.5 rounded-xl bg-emerald-700 text-white hover:bg-emerald-800 font-semibold text-xs transition shadow-sm gap-2">
+                <i class="fa-solid fa-file-excel text-sm"></i> 15-talik Rasmiy Excelni yuklab olish
+            </button>
+        </div>
+    </div>
+
+    <!-- 18 Sheet Tabs Navigation -->
+    <div class="bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex overflow-x-auto space-x-1.5 pb-1 text-xs font-semibold scrollbar-thin">
+            {% for sname in sheet_names %}
+            <a href="/monthly-15?sheet={{ sname | urlencode }}&district={{ selected_district | urlencode }}" 
+               class="px-3 py-1.5 rounded-lg whitespace-nowrap transition flex items-center gap-1.5
+               {% if selected_sheet == sname %}bg-emerald-600 text-white shadow-sm font-bold{% else %}bg-slate-50 text-slate-700 hover:bg-slate-100{% endif %}">
+                <i class="fa-regular fa-file-lines text-[10px]"></i>
+                {{ sname }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Reconciliation Banner for Nominal Sheets -->
+    {% if is_nominal and reconciliation and reconciliation.has_svod %}
+    <div id="reconciliationBanner" class="p-4 rounded-2xl border transition shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4
+        {% if reconciliation.is_matched %}bg-emerald-50/90 border-emerald-300 text-emerald-950
+        {% elif reconciliation.diff < 0 %}bg-amber-50/90 border-amber-300 text-amber-950
+        {% else %}bg-purple-50/90 border-purple-300 text-purple-950{% endif %}">
+        
+        <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl flex items-center justify-center text-xl shrink-0 shadow-xs
+                {% if reconciliation.is_matched %}bg-emerald-600 text-white
+                {% elif reconciliation.diff < 0 %}bg-amber-500 text-white animate-pulse
+                {% else %}bg-purple-600 text-white{% endif %}">
+                <i class="fa-solid {% if reconciliation.is_matched %}fa-circle-check{% else %}fa-scale-unbalanced{% endif %}"></i>
+            </div>
+            <div>
+                <div class="text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                    <span>Muvofiqlik Tekshiruvi (Svod vs F.I.Sh):</span>
+                    <span class="px-2.5 py-0.5 rounded-lg text-[11px] font-extrabold bg-white/90 shadow-2xs border border-current">
+                        🏢 {{ reconciliation.district_name }}
+                    </span>
+                </div>
+                <div class="text-xs mt-1 text-slate-700">
+                    Svod jadval (<strong>{{ reconciliation.svod_sheet }}</strong>)da ko‘rsatilgan:
+                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-white font-black text-slate-900 border border-slate-300 mx-1">
+                        {{ reconciliation.target_count }} nafar
+                    </span>
+                    Nominal ro‘yxatdagi o‘quvchilar soni:
+                    <span class="inline-flex items-center px-2 py-0.5 rounded bg-white font-black text-slate-900 border border-slate-300 mx-1">
+                        {{ reconciliation.current_count }} nafar
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+            {% if reconciliation.is_matched %}
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xs">
+                <i class="fa-solid fa-check-double"></i> Svod va F.I.Sh soni to‘liq mos keldi ✅
+            </span>
+            {% elif reconciliation.diff < 0 %}
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-600 text-white font-bold text-xs shadow-xs">
+                <i class="fa-solid fa-triangle-exclamation"></i> Diqqat: {{ -reconciliation.diff }} nafar o‘quvchi kam kiritilgan! ⚠️
+            </span>
+            {% else %}
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600 text-white font-bold text-xs shadow-xs">
+                <i class="fa-solid fa-circle-exclamation"></i> Diqqat: {{ reconciliation.diff }} nafar o‘quvchi ortiqcha kiritilgan! ⚠️
+            </span>
+            {% endif %}
+            
+            <button onclick="openNominalExcelImportModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-600 text-white hover:bg-teal-700 font-bold text-xs shadow-xs transition">
+                <i class="fa-solid fa-file-excel"></i> Excel orqali to‘ldirish
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Filter & Toolbar Bar -->
+    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <!-- District Selector -->
+        <div class="flex flex-wrap items-center gap-3">
+            <label class="text-xs font-bold text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
+                <i class="fa-solid fa-location-dot text-emerald-600"></i>
+                Tuman / Shahar filtri:
+            </label>
+            {% if current_user and current_user.role == 'district' %}
+            <div class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-bold text-xs">
+                <i class="fa-solid fa-lock text-emerald-600"></i>
+                <span>Sizning hududingiz: <b>{{ current_user.district_name }}</b></span>
+            </div>
+            {% else %}
+            <div class="relative min-w-[240px]">
+                <select id="districtFilterSelect" onchange="changeDistrictFilter(this.value)" 
+                        class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-slate-700 font-semibold focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    <option value="all" {% if selected_district == 'all' %}selected{% endif %}>🌐 Barcha tuman va shaharlar (Viloyat ko‘rinishi)</option>
+                    {% for d in districts %}
+                    <option value="{{ d.name }}" {% if selected_district == d.name %}selected{% endif %}>
+                        🏢 {{ d.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% if selected_district != 'all' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-200">
+                <i class="fa-solid fa-check-circle"></i>
+                {{ selected_district }} tanlandi
+            </span>
+            <a href="/monthly-15?sheet={{ selected_sheet | urlencode }}&district=all" class="text-xs text-slate-400 hover:text-slate-600 underline">
+                Filtrni tozalash
+            </a>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative w-full md:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="tableSearch" onkeyup="filterTable()" placeholder="Jadval qatorlaridan qidirish..." 
+                   class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+    </div>
+
+    <!-- Active Sheet Indicator -->
+    <div class="flex items-center justify-between px-1">
+        <div class="text-xs font-bold text-slate-700 flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            Varaq: <span class="text-emerald-700 font-extrabold">{{ selected_sheet }}</span>
+            <span class="text-slate-400 font-normal">({{ table_rows | length }} ta qator)</span>
+        </div>
+        <div class="text-[11px] text-slate-500 italic">
+            {% if is_nominal %}
+            * Har bir o‘quvchi qatori o‘ng tarafidagi ✏️ yoki 🗑️ tugmasi orqali tahrirlanadi.
+            {% else %}
+            * Tuman qatoridagi "✏️ Tahrirlash" tugmasini bosib o‘z ko‘rsatkichlaringizni kiriting.
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Visual Sample Guide Table for Nominal Sheets -->
+    {% if is_nominal %}
+    <div class="bg-gradient-to-r from-slate-50 via-teal-50/30 to-slate-50 p-4 rounded-2xl border border-teal-200 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-teal-600 animate-pulse"></span>
+                <span class="text-xs font-bold text-teal-950 uppercase tracking-wide flex items-center gap-1.5">
+                    <i class="fa-solid fa-table"></i>
+                    F.I.Sh Kiritish Namunaviy Jadvali (Ko‘rgazmali qo‘llanma)
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="openNominalExcelImportModal()" class="px-3 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white font-bold text-[11px] shadow-2xs transition">
+                    <i class="fa-solid fa-file-excel mr-1"></i> Exceldan yuklash
+                </button>
+                <button type="button" onclick="openNominalAddModal()" class="px-3 py-1 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold text-[11px] shadow-2xs transition">
+                    <i class="fa-solid fa-user-plus mr-1"></i> Qo‘lda kiritish
+                </button>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto rounded-xl border border-teal-200/80 bg-white shadow-2xs">
+            <table class="w-full text-left border-collapse text-[11px]">
+                <thead>
+                    <tr class="bg-teal-700 text-white font-bold">
+                        {% for col in columns %}
+                            {% if col.index > 0 and 'Ustun' not in col.title %}
+                            <th class="py-2 px-3 border-r border-teal-600 whitespace-nowrap text-center">{{ col.title }}</th>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="bg-emerald-50/70 text-slate-800 font-medium">
+                        {% for col in columns %}
+                            {% if col.index > 0 and 'Ustun' not in col.title %}
+                            <td class="py-2.5 px-3 border-r border-teal-100 whitespace-nowrap {% if col.index <= 1 %}text-center font-bold text-teal-800{% endif %}">
+                                {% if col.index == 1 %}1 (Namuna)
+                                {% elif 'мактаб' in col.title.lower() or 'синф' in col.title.lower() %}5-мактаб, 8-Б синф
+                                {% elif 'ф.и.ш' in col.title.lower() or 'исми' in col.title.lower() %}<b class="text-teal-900 font-bold">Каримов Жасурбек Анвар ўғли</b>
+                                {% elif 'сана' in col.title.lower() or 'сабаб' in col.title.lower() %}15.09.2025 дарс қолдирганлиги учун
+                                {% elif 'масъул' in col.title.lower() or 'инспектор' in col.title.lower() %}А.Турсунов (94-553-24-02)
+                                {% elif 'тўгарак' in col.title.lower() %}Футбол спорт тўгараги
+                                {% elif 'манзил' in col.title.lower() %}Янгиобод МФЙ, Тинчлик кўчаси 12-уй
+                                {% elif 'оила' in col.title.lower() %}Ота-онаси бор, нотинч оила
+                                {% elif 'ҳолат' in col.title.lower() %}Ўқийди, ижобий ўзгариш бор
+                                {% elif 'туман' in col.title.lower() or 'шаҳар' in col.title.lower() %}{{ current_user.district_name if current_user and current_user.district_name else "Бувайда тумани" }}
+                                {% else %}Намунавий маълумот{% endif %}
+                            </td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Exact Excel Sheet Table View -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+        <div class="overflow-x-auto max-h-[75vh]">
+            <table id="excelTable" class="w-full text-left border-collapse text-xs border border-slate-200">
+                <tbody>
+                    {% for row in table_rows %}
+                    <tr class="transition
+                        {% if row.is_header %}bg-slate-100 font-bold text-slate-800 border-b-2 border-slate-300
+                        {% elif row.is_total %}bg-amber-50 font-bold text-amber-900 border-t-2 border-b-2 border-amber-300
+                        {% elif row.is_section_header %}bg-emerald-50/90 font-bold text-emerald-900 border-t border-b border-emerald-300
+                        {% elif row.is_selected_district %}bg-emerald-50 font-semibold border-b border-emerald-200 text-slate-800
+                        {% elif loop.first %}bg-blue-50 font-bold text-blue-900 border-b border-blue-200
+                        {% else %}hover:bg-slate-50/80 border-b border-slate-100 text-slate-700{% endif %}"
+                        data-district="{{ row.district_name }}"
+                        data-row-index="{{ row.row_index }}">
+                        
+                        <!-- Cells -->
+                        {% for cell in row.cells %}
+                        <td class="py-2.5 px-3 border-r border-slate-200/80 
+                            {% if row.is_header or row.is_total or row.row_index == 1 %}text-center align-middle whitespace-normal
+                            {% elif row.is_section_header %}align-middle font-bold text-emerald-800
+                            {% elif cell.isdigit() or cell.replace('-','').isdigit() %}text-center font-medium
+                            {% else %}align-top{% endif %}">
+                            {{ cell }}
+                        </td>
+                        {% endfor %}
+
+                        <!-- Action Column (Edit / Delete) -->
+                        <td class="py-2 px-3 text-center align-middle whitespace-nowrap bg-white/60">
+                            {% if not row.is_header and not row.is_total and row.row_index > 1 %}
+                                {% if is_nominal and not row.is_section_header %}
+                                    {% if not current_user or current_user.role != 'district' or current_user.district_name == row.district_name %}
+                                    <div class="inline-flex items-center gap-1.5">
+                                        <button onclick='openNominalEditModal({{ row.row_index }}, {{ row.district_name | tojson }}, {{ row.cells | tojson }})'
+                                                title="Tahrirlash"
+                                                class="px-2 py-1 rounded bg-amber-50 text-amber-700 hover:bg-amber-100 font-semibold text-[11px] border border-amber-200 transition">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </button>
+                                        <button onclick='deleteNominalRow({{ row.row_index }}, {{ (row.cells[3] if row.cells|length > 3 else "Ushbu qator") | tojson }})'
+                                                title="O‘chirish"
+                                                class="px-2 py-1 rounded bg-red-50 text-red-600 hover:bg-red-100 font-semibold text-[11px] border border-red-200 transition">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </div>
+                                    {% endif %}
+                                {% elif not is_nominal and row.district_name %}
+                                    {% if not current_user or current_user.role != 'district' or current_user.district_name == row.district_name %}
+                                    <button onclick='openSvodEditModal({{ row.district_name | tojson }}, {{ row.cells | tojson }})'
+                                            class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-[11px] border border-emerald-200 transition shadow-xs">
+                                        <i class="fa-solid fa-pen-to-square"></i> Tahrirlash
+                                    </button>
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="15" class="py-8 text-center text-slate-400 italic">Ushbu varaqda ma’lumotlar topilmadi.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- ==================== MODAL 1: SVOD EDIT MODAL ==================== -->
+<div id="svodEditModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="gradient-header text-white px-6 py-4 flex items-center justify-between">
+            <h3 class="text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-pen-to-square"></i>
+                <span id="svodModalDistrictTitle">Tuman ma’lumotlarini kiritish</span>
+            </h3>
+            <button onclick="closeSvodEditModal()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+        </div>
+
+        <div class="px-6 py-3 bg-emerald-50 border-b border-emerald-100 text-xs text-emerald-800 flex items-center justify-between">
+            <span>Varaq: <b>{{ selected_sheet }}</b></span>
+            <span class="text-slate-500 italic">* Raqamlar saqlangach, "Жами" qatori avtomatik qayta hisoblanadi.</span>
+        </div>
+
+        <form id="svodEditForm" onsubmit="handleSvodSave(event)" class="p-6 overflow-y-auto space-y-4">
+            <input type="hidden" id="svodDistrictName" value="">
+            <div id="svodFormFields" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Dynamically generated inputs based on columns -->
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-4 border-t border-slate-100">
+                <button type="button" onclick="closeSvodEditModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                    Bekor qilish
+                </button>
+                <button type="submit" id="svodSaveBtn" class="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-check"></i> Saqlash va hisoblash
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== MODAL 2: NOMINAL ADD/EDIT MODAL ==================== -->
+<div id="nominalModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="gradient-header text-white px-6 py-4 flex items-center justify-between">
+            <h3 class="text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-user-pen"></i>
+                <span id="nominalModalTitle">Yangi ma’lumot kiritish</span>
+            </h3>
+            <button onclick="closeNominalModal()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+        </div>
+
+        <div class="px-6 py-3 bg-purple-50 border-b border-purple-100 text-xs text-purple-800 flex items-center justify-between">
+            <span>Varaq: <b>{{ selected_sheet }}</b></span>
+            <span class="text-slate-500 italic">* Yangi o‘quvchi ro‘yxatga avtomatik qo‘shiladi</span>
+        </div>
+
+        <form id="nominalForm" onsubmit="handleNominalSave(event)" class="p-6 overflow-y-auto space-y-4">
+            <input type="hidden" id="nominalMode" value="add"> <!-- add or update -->
+            <input type="hidden" id="nominalRowIndex" value="">
+
+            <!-- District Selection -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Tuman / Shahar <span class="text-red-500">*</span>
+                </label>
+                {% if current_user and current_user.role == 'district' %}
+                <input type="text" id="nominalDistrictSelect" value="{{ current_user.district_name }}" readonly
+                       class="w-full text-xs bg-slate-100 border border-slate-300 rounded-lg p-2.5 text-slate-800 font-bold cursor-not-allowed">
+                {% else %}
+                <select id="nominalDistrictSelect" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-slate-800 font-semibold focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                    <option value="">-- Tumanni tanlang --</option>
+                    {% for d in districts %}
+                    <option value="{{ d.name }}">{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+            </div>
+
+            <div id="nominalFormFields" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Dynamically populated inputs based on columns -->
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-4 border-t border-slate-100">
+                <button type="button" onclick="closeNominalModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                    Bekor qilish
+                </button>
+                <button type="submit" id="nominalSaveBtn" class="px-5 py-2 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-700 text-white transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-check"></i> Saqlash
+                </button>
+            </div>
+        </form>
+    </div>
+<!-- ==================== MODAL: NOMINAL EXCEL IMPORT MODAL ==================== -->
+<div id="nominalExcelImportModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl overflow-hidden flex flex-col max-h-[92vh]">
+        <div class="gradient-header text-white px-6 py-4 flex items-center justify-between">
+            <h3 class="text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Excel Orqali F.I.Sh Ro‘yxatini Yuklash</span>
+            </h3>
+            <button onclick="closeNominalExcelImportModal()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+        </div>
+
+        <div class="px-6 py-3 bg-teal-50 border-b border-teal-100 text-xs text-teal-900 flex items-center justify-between">
+            <span>Varaq: <b>{{ selected_sheet }}</b></span>
+            <button type="button" onclick="downloadNominalTemplate()" class="inline-flex items-center gap-1 text-teal-700 hover:text-teal-900 font-bold underline">
+                <i class="fa-solid fa-download"></i> Namunaviy shablonni yuklab olish
+            </button>
+        </div>
+
+        <form id="nominalExcelForm" onsubmit="handleNominalExcelUpload(event)" class="p-6 overflow-y-auto space-y-4">
+            <!-- District Selection -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Tuman / Shahar <span class="text-red-500">*</span>
+                </label>
+                {% if current_user and current_user.role == 'district' %}
+                <input type="text" id="importDistrictName" value="{{ current_user.district_name }}" readonly
+                       class="w-full text-xs bg-slate-100 border border-slate-300 rounded-lg p-2.5 text-slate-800 font-bold cursor-not-allowed">
+                {% else %}
+                <select id="importDistrictName" required class="w-full text-xs bg-slate-50 border border-slate-300 rounded-lg p-2.5 text-slate-800 font-semibold focus:ring-2 focus:ring-teal-500 focus:outline-none">
+                    <option value="">-- Tumanni tanlang --</option>
+                    {% for d in districts %}
+                    <option value="{{ d.name }}" {% if selected_district == d.name %}selected{% endif %}>{{ d.name }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+            </div>
+
+            <!-- Import Mode -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1.5">
+                    Yuklash rejimi:
+                </label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                    <label class="flex items-start gap-2.5 p-3 rounded-xl border border-teal-300 bg-teal-50/50 cursor-pointer hover:bg-teal-50 transition">
+                        <input type="radio" name="importMode" value="replace" checked class="mt-0.5 text-teal-600 focus:ring-teal-500">
+                        <div>
+                            <span class="font-bold text-slate-800 block">To‘liq yangilash (Tavsiya)</span>
+                            <span class="text-[11px] text-slate-500">Eski ro‘yxat o‘rniga Exceldagi o‘quvchilarni yangitdan o‘rnatadi</span>
+                        </div>
+                    </label>
+                    <label class="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200 bg-slate-50 cursor-pointer hover:bg-slate-100 transition">
+                        <input type="radio" name="importMode" value="append" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+                        <div>
+                            <span class="font-bold text-slate-800 block">Mavjudlariga qo‘shish</span>
+                            <span class="text-[11px] text-slate-500">Oldingi o‘quvchilarni saqlab, yangilarini davomidan qo‘shadi</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- File Upload Zone -->
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">
+                    Excel fayli (.xlsx) <span class="text-red-500">*</span>
+                </label>
+                <div id="nominalDropZone" class="border-2 border-dashed border-teal-300 rounded-2xl p-6 text-center bg-teal-50/30 hover:bg-teal-50 transition cursor-pointer"
+                     onclick="document.getElementById('nominalExcelFileInput').click()"
+                     ondragover="event.preventDefault(); this.classList.add('border-teal-500', 'bg-teal-100');"
+                     ondragleave="this.classList.remove('border-teal-500', 'bg-teal-100');"
+                     ondrop="handleNominalFileDrop(event)">
+                    <i class="fa-solid fa-file-excel text-3xl text-teal-600 mb-2"></i>
+                    <p class="text-xs font-bold text-slate-700">O‘quvchilar ro‘yxati yozilgan Excel faylni tanlang</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">yoki sudrab shu yerga tashlang (.xlsx)</p>
+                    <p id="nominalSelectedFileName" class="text-xs font-bold text-emerald-700 mt-2 hidden"></p>
+                    <input type="file" id="nominalExcelFileInput" accept=".xlsx,.xls" class="hidden" onchange="displayNominalSelectedFile(this)">
+                </div>
+            </div>
+
+            <!-- Rules notice -->
+            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-600 space-y-1">
+                <div class="flex items-center gap-1.5 font-bold text-slate-700">
+                    <i class="fa-solid fa-shield-halved text-teal-600"></i> Avtomatik tekshiruvlar:
+                </div>
+                <ul class="list-disc list-inside space-y-0.5 text-slate-500 pl-1">
+                    <li>Bir xil F.I.Sh (dublikat) kiritilishi avtomatik aniqlanib, takrorlanishi cheklanadi.</li>
+                    <li>Yuklangan o‘quvchilar soni svod jadvaldagi son bilan solishtirilib, xabarnoma beriladi.</li>
+                </ul>
+            </div>
+
+            <!-- Live Validation / Feedback Container -->
+            <div id="importFeedbackArea" class="hidden p-3.5 rounded-xl text-xs space-y-2"></div>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeNominalExcelImportModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                    Bekor qilish
+                </button>
+                <button type="submit" id="nominalImportSubmitBtn" class="px-5 py-2.5 rounded-xl text-xs font-bold bg-teal-600 hover:bg-teal-700 text-white transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-check"></i> Tekshirish va Saqlash
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== MODAL 3: EXCEL UPLOAD MODAL ==================== -->
+<div id="excelUploadModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden">
+        <div class="gradient-header text-white px-6 py-4 flex items-center justify-between">
+            <h3 class="text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-file-excel"></i> Yangi 15-talik Excel faylini yuklash
+            </h3>
+            <button onclick="closeExcelUploadModal()" class="text-white/80 hover:text-white text-xl">&times;</button>
+        </div>
+
+        <form id="excelUploadForm" onsubmit="handleExcelUpload(event)" class="p-6 space-y-4">
+            <div id="dropZone" class="border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center bg-blue-50/50 hover:bg-blue-50 transition cursor-pointer"
+                 onclick="document.getElementById('excelFileInput').click()"
+                 ondragover="event.preventDefault(); this.classList.add('border-blue-500', 'bg-blue-100');"
+                 ondragleave="this.classList.remove('border-blue-500', 'bg-blue-100');"
+                 ondrop="handleFileDrop(event)">
+                <i class="fa-solid fa-cloud-arrow-up text-4xl text-blue-500 mb-2"></i>
+                <p class="text-sm font-bold text-slate-700">Faylni shu yerga sudrab tashlang</p>
+                <p class="text-xs text-slate-400 mt-1">yoki kompyuterdan tanlash uchun bosing (.xlsx, .xls)</p>
+                <p id="selectedFileName" class="text-xs font-semibold text-emerald-600 mt-3 hidden"></p>
+                <input type="file" id="excelFileInput" name="file" accept=".xlsx,.xls" class="hidden" onchange="displaySelectedFile(this)">
+            </div>
+
+            <p class="text-[11px] text-slate-500 italic">
+                * Ushbu fayl yuklanganda bazadagi 18 ta varaq ma’lumotlari yangi fayl asosida avtomatik yangilanadi.
+            </p>
+
+            <div class="flex justify-end space-x-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeExcelUploadModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                    Bekor qilish
+                </button>
+                <button type="submit" id="excelSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-upload"></i> Bazaga import qilish
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const currentSheet = {{ selected_sheet | tojson }};
+    const currentDistrict = {{ selected_district | tojson }};
+    const isNominal = {{ is_nominal | tojson }};
+    const columnsMeta = {{ columns_json | safe }};
+
+    function changeDistrictFilter(val) {
+        window.location.href = `/monthly-15?sheet=${encodeURIComponent(currentSheet)}&district=${encodeURIComponent(val)}`;
+    }
+
+    function filterTable() {
+        const input = document.getElementById('tableSearch');
+        const filter = input.value.toLowerCase();
+        const table = document.getElementById('excelTable');
+        const trs = table.getElementsByTagName('tr');
+
+        for (let i = 0; i < trs.length; i++) {
+            const tr = trs[i];
+            const text = tr.textContent || tr.innerText;
+            if (text.toLowerCase().indexOf(filter) > -1) {
+                tr.style.display = "";
+            } else {
+                tr.style.display = "none";
+            }
+        }
+    }
+
+    // ==================== SVOD EDIT FUNCTIONS ====================
+    let currentSvodCells = [];
+
+    function openSvodEditForSelectedDistrict() {
+        if (currentDistrict === 'all' || !currentDistrict) return;
+        // Find row for current district
+        const table = document.getElementById('excelTable');
+        const trs = table.querySelectorAll(`tr[data-district="${currentDistrict}"]`);
+        if (trs.length > 0) {
+            const tds = trs[0].querySelectorAll('td');
+            const cells = [];
+            // Exclude last td which is action
+            for (let i = 0; i < tds.length - 1; i++) {
+                cells.push(tds[i].innerText.trim());
+            }
+            openSvodEditModal(currentDistrict, cells);
+        } else {
+            Swal.fire('Diqqat', `${currentDistrict} bo‘yicha qator topilmadi`, 'warning');
+        }
+    }
+
+    function openSvodEditModal(districtName, cells) {
+        currentSvodCells = cells ? [...cells] : [];
+        document.getElementById('svodDistrictName').value = districtName;
+        document.getElementById('svodModalDistrictTitle').innerText = `${districtName} ko‘rsatkichlarini kiritish va tahrirlash`;
+
+        const container = document.getElementById('svodFormFields');
+        container.innerHTML = '';
+
+        // Build inputs based on columnsMeta
+        columnsMeta.forEach(col => {
+            if (col.index === 0) return; // Skip padding cell
+            const val = (cells && cells.length > col.index) ? cells[col.index] : '';
+
+            const wrapper = document.createElement('div');
+            if (col.is_readonly) {
+                wrapper.className = "p-2.5 bg-slate-50 rounded-xl border border-slate-200";
+                wrapper.innerHTML = `
+                    <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">${col.title}</label>
+                    <input type="text" class="w-full text-xs bg-slate-100 border-none rounded p-1 text-slate-700 font-bold" value="${val}" readonly>
+                `;
+            } else {
+                wrapper.className = "p-3 bg-white rounded-xl border border-slate-200 shadow-xs focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500";
+                wrapper.innerHTML = `
+                    <label class="block text-xs font-bold text-slate-700 mb-1">${col.title}</label>
+                    <input type="text" data-col-index="${col.index}" class="svod-input w-full text-xs border border-slate-300 rounded-lg p-2 text-slate-800 font-semibold focus:outline-none" value="${val}" placeholder="0">
+                `;
+            }
+            container.appendChild(wrapper);
+        });
+
+        document.getElementById('svodEditModal').classList.remove('hidden');
+    }
+
+    function closeSvodEditModal() {
+        document.getElementById('svodEditModal').classList.add('hidden');
+    }
+
+    async function handleSvodSave(e) {
+        e.preventDefault();
+        const districtName = document.getElementById('svodDistrictName').value;
+        const inputs = document.querySelectorAll('.svod-input');
+
+        const updatedCells = [...currentSvodCells];
+        inputs.forEach(inp => {
+            const idx = parseInt(inp.getAttribute('data-col-index'));
+            while (updatedCells.length <= idx) {
+                updatedCells.push("");
+            }
+            updatedCells[idx] = inp.value.trim();
+        });
+
+        Swal.fire({
+            title: 'Ma’lumotlar saqlanmoqda...',
+            text: 'Jami hisob-kitoblar yangilanmoqda',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const res = await fetch('/api/monthly-15/save-svod', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sheet_name: currentSheet,
+                    district_name: districtName,
+                    cells: updatedCells,
+                    user_name: districtName + " mas’uli"
+                })
+            });
+
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: 'Muvaffaqiyatli saqlandi!',
+                    text: data.message,
+                    icon: 'success',
+                    timer: 1600,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.detail || 'Saqlashda xatolik yuz berdi', 'error');
+            }
+        } catch (err) {
+            Swal.close();
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik yuz berdi', 'error');
+        }
+    }
+
+    // ==================== NOMINAL (F.I.SH) FUNCTIONS ====================
+    let currentNominalCells = [];
+
+    function openNominalAddModal() {
+        document.getElementById('nominalMode').value = 'add';
+        document.getElementById('nominalRowIndex').value = '';
+        document.getElementById('nominalModalTitle').innerText = "Yangi o‘quvchi / holat kiritish";
+
+        const distSelect = document.getElementById('nominalDistrictSelect');
+        if (currentDistrict && currentDistrict !== 'all') {
+            distSelect.value = currentDistrict;
+        } else {
+            distSelect.value = "";
+        }
+
+        buildNominalFields([]);
+        document.getElementById('nominalModal').classList.remove('hidden');
+    }
+
+    function openNominalEditModal(rowIndex, districtName, cells) {
+        currentNominalCells = cells ? [...cells] : [];
+        document.getElementById('nominalMode').value = 'update';
+        document.getElementById('nominalRowIndex').value = rowIndex;
+        document.getElementById('nominalModalTitle').innerText = `${districtName}: Ma’lumotni tahrirlash`;
+
+        const distSelect = document.getElementById('nominalDistrictSelect');
+        distSelect.value = districtName;
+
+        buildNominalFields(cells);
+        document.getElementById('nominalModal').classList.remove('hidden');
+    }
+
+    function buildNominalFields(cells) {
+        const container = document.getElementById('nominalFormFields');
+        container.innerHTML = '';
+
+        columnsMeta.forEach(col => {
+            if (col.index <= 1) return; // Skip padding and sequential number (t/r)
+            const val = (cells && cells.length > col.index) ? cells[col.index] : '';
+
+            const wrapper = document.createElement('div');
+            // If it's a long text field (address, reason, circle) give it 2 columns
+            const isLong = col.title.length > 30 || col.title.toLowerCase().includes('manzil') || col.title.toLowerCase().includes('сабаб') || col.title.toLowerCase().includes('тўгарак') || col.title.toLowerCase().includes('маълумот');
+            if (isLong) {
+                wrapper.className = "md:col-span-2 p-3 bg-slate-50 rounded-xl border border-slate-200";
+            } else {
+                wrapper.className = "p-3 bg-slate-50 rounded-xl border border-slate-200";
+            }
+
+            wrapper.innerHTML = `
+                <label class="block text-xs font-bold text-slate-700 mb-1">${col.title}</label>
+                <input type="text" data-col-index="${col.index}" class="nominal-input w-full text-xs bg-white border border-slate-300 rounded-lg p-2.5 text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-purple-500" value="${val}" placeholder="${col.title}ni kiriting...">
+            `;
+            container.appendChild(wrapper);
+        });
+    }
+
+    function closeNominalModal() {
+        document.getElementById('nominalModal').classList.add('hidden');
+    }
+
+    async function handleNominalSave(e) {
+        e.preventDefault();
+        const mode = document.getElementById('nominalMode').value;
+        const rowIndex = document.getElementById('nominalRowIndex').value;
+        const districtName = document.getElementById('nominalDistrictSelect').value;
+
+        if (!districtName) {
+            Swal.fire('Diqqat', 'Iltimos, tuman yoki shaharni tanlang', 'warning');
+            return;
+        }
+
+        const inputs = document.querySelectorAll('.nominal-input');
+        const rowCells = [];
+        inputs.forEach(inp => {
+            const idx = parseInt(inp.getAttribute('data-col-index'));
+            while (rowCells.length < idx) {
+                rowCells.push("");
+            }
+            rowCells[idx] = inp.value.trim();
+        });
+
+        // Filter out empty prefix elements
+        const payloadCells = rowCells.slice(2); // Send data starting from index 2
+
+        Swal.fire({
+            title: 'Saqlanmoqda...',
+            text: 'Ma’lumot bazaga kiritilmoqda',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            let res;
+            if (mode === 'add') {
+                res = await fetch('/api/monthly-15/add-nominal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sheet_name: currentSheet,
+                        district_name: districtName,
+                        cells: payloadCells,
+                        user_name: districtName + " mas’uli"
+                    })
+                });
+            } else {
+                // Update
+                const updatedFullCells = [...currentNominalCells];
+                inputs.forEach(inp => {
+                    const idx = parseInt(inp.getAttribute('data-col-index'));
+                    while (updatedFullCells.length <= idx) {
+                        updatedFullCells.push("");
+                    }
+                    updatedFullCells[idx] = inp.value.trim();
+                });
+
+                res = await fetch('/api/monthly-15/update-nominal', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sheet_name: currentSheet,
+                        row_index: parseInt(rowIndex),
+                        cells: updatedFullCells,
+                        user_name: districtName + " mas’uli"
+                    })
+                });
+            }
+
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: 'Muvaffaqiyatli!',
+                    text: data.message,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.detail || 'Saqlashda xatolik', 'error');
+            }
+        } catch (err) {
+            Swal.close();
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik yuz berdi', 'error');
+        }
+    }
+
+    async function deleteNominalRow(rowIndex, description) {
+        const confirm = await Swal.fire({
+            title: 'Haqiqatan ham o‘chirmoqchimisiz?',
+            text: `${description} bo‘yicha yozuv butunlay o‘chiriladi!`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Ha, o‘chirilsin!',
+            cancelButtonText: 'Bekor qilish'
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        Swal.fire({
+            title: 'O‘chirilmoqda...',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const res = await fetch('/api/monthly-15/delete-row', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sheet_name: currentSheet,
+                    row_index: parseInt(rowIndex),
+                    user_name: currentDistrict !== 'all' ? currentDistrict + " mas’uli" : "Viloyat ma’muri"
+                })
+            });
+
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: 'O‘chirildi!',
+                    text: data.message,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.detail || 'O‘chirishda xatolik', 'error');
+            }
+        } catch (err) {
+            Swal.close();
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik yuz berdi', 'error');
+        }
+    }
+
+    // ==================== EXCEL DOWNLOAD ====================
+    async function downloadExcelReport() {
+        Swal.fire({
+            title: '15-talik Excel kitobi yuklanmoqda...',
+            text: 'Barcha 18 ta varaq bazadagi oxirgi tuman ma’lumotlari bilan to‘liq jamlanmoqda',
+            allowOutsideClick: false,
+            didOpen: () => { Swal.showLoading(); }
+        });
+
+        try {
+            const res = await fetch('/api/reports/generate-excel', { method: 'POST' });
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                window.location.href = data.download_url;
+            } else {
+                Swal.fire('Xatolik', 'Faylni yuklashda xatolik yuz berdi', 'error');
+            }
+        } catch(e) {
+            Swal.close();
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik', 'error');
+        }
+    }
+
+    // ==================== EXCEL UPLOAD ====================
+    function openExcelUploadModal() {
+        document.getElementById('excelUploadModal').classList.remove('hidden');
+    }
+    function closeExcelUploadModal() {
+        document.getElementById('excelUploadModal').classList.add('hidden');
+    }
+    function displaySelectedFile(input) {
+        if (input.files && input.files[0]) {
+            const lbl = document.getElementById('selectedFileName');
+            lbl.innerText = `Tanlandi: ${input.files[0].name} (${(input.files[0].size/1024/1024).toFixed(2)} MB)`;
+            lbl.classList.remove('hidden');
+        }
+    }
+    function handleFileDrop(e) {
+        e.preventDefault();
+        const dropZone = document.getElementById('dropZone');
+        dropZone.classList.remove('border-blue-500', 'bg-blue-100');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            document.getElementById('excelFileInput').files = e.dataTransfer.files;
+            displaySelectedFile(document.getElementById('excelFileInput'));
+        }
+    }
+    async function handleExcelUpload(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('excelFileInput');
+        if (!fileInput.files || !fileInput.files[0]) {
+            Swal.fire('Diqqat', 'Iltimos, avval Excel faylini tanlang', 'warning');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        Swal.fire({
+            title: 'Fayl bazaga yuklanmoqda...',
+            text: '18 ta sahifa tahlil qilinmoqda, iltimos kuting',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const res = await fetch('/api/admin/import-excel-15', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: 'Muvaffaqiyatli!',
+                    text: data.message,
+                    icon: 'success'
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.detail || 'Faylni import qilishda xatolik yuz berdi', 'error');
+            }
+        } catch(err) {
+            Swal.close();
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik yuz berdi', 'error');
+        }
+    // ==================== NOMINAL EXCEL IMPORT & TEMPLATE ====================
+    function downloadNominalTemplate() {
+        const dist = currentDistrict !== 'all' ? currentDistrict : '';
+        window.location.href = `/api/monthly-15/nominal-template?sheet=${encodeURIComponent(currentSheet)}&district=${encodeURIComponent(dist)}`;
+    }
+
+    function openNominalExcelImportModal() {
+        document.getElementById('importFeedbackArea').classList.add('hidden');
+        document.getElementById('importFeedbackArea').innerHTML = '';
+        document.getElementById('nominalSelectedFileName').classList.add('hidden');
+        document.getElementById('nominalExcelFileInput').value = '';
+        document.getElementById('nominalExcelImportModal').classList.remove('hidden');
+    }
+
+    function closeNominalExcelImportModal() {
+        document.getElementById('nominalExcelImportModal').classList.add('hidden');
+    }
+
+    function displayNominalSelectedFile(input) {
+        if (input.files && input.files[0]) {
+            const lbl = document.getElementById('nominalSelectedFileName');
+            lbl.innerText = `Tanlandi: ${input.files[0].name} (${(input.files[0].size / 1024).toFixed(1)} KB)`;
+            lbl.classList.remove('hidden');
+        }
+    }
+
+    function handleNominalFileDrop(e) {
+        e.preventDefault();
+        const dropZone = document.getElementById('nominalDropZone');
+        dropZone.classList.remove('border-teal-500', 'bg-teal-100');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            document.getElementById('nominalExcelFileInput').files = e.dataTransfer.files;
+            displayNominalSelectedFile(document.getElementById('nominalExcelFileInput'));
+        }
+    }
+
+    async function handleNominalExcelUpload(e) {
+        e.preventDefault();
+        const fileInput = document.getElementById('nominalExcelFileInput');
+        if (!fileInput.files || !fileInput.files[0]) {
+            Swal.fire('Diqqat', 'Iltimos, avval o‘quvchilar ro‘yxati yozilgan Excel faylini tanlang', 'warning');
+            return;
+        }
+
+        const districtName = document.getElementById('importDistrictName').value;
+        if (!districtName) {
+            Swal.fire('Diqqat', 'Iltimos, tuman yoki shaharni tanlang', 'warning');
+            return;
+        }
+
+        const mode = document.querySelector('input[name="importMode"]:checked').value;
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('sheet_name', currentSheet);
+        formData.append('district_name', districtName);
+        formData.append('mode', mode);
+
+        const btn = document.getElementById('nominalImportSubmitBtn');
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Tekshirilmoqda...`;
+
+        const feedbackArea = document.getElementById('importFeedbackArea');
+        feedbackArea.classList.add('hidden');
+
+        try {
+            const res = await fetch('/api/monthly-15/import-nominal-excel', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await res.json();
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-check"></i> Tekshirish va Saqlash`;
+
+            if (res.ok && data.status === 'success') {
+                feedbackArea.classList.remove('hidden');
+                
+                let dupsHtml = '';
+                const totalDups = (data.duplicates_in_file ? data.duplicates_in_file.length : 0) + (data.duplicates_in_db ? data.duplicates_in_db.length : 0);
+                if (totalDups > 0) {
+                    const dupList = [];
+                    if (data.duplicates_in_file) {
+                        data.duplicates_in_file.forEach(d => dupList.push(`${d.fish} (faylda takrorlangan)`));
+                    }
+                    if (data.duplicates_in_db) {
+                        data.duplicates_in_db.forEach(d => dupList.push(`${d.fish} (avval bazada mavjud)`));
+                    }
+                    dupsHtml = `
+                        <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 mt-2 text-[11px]">
+                            <b>⚠️ Takrorlangan o‘quvchilar (${totalDups} ta chetlashtirildi):</b><br>
+                            ${dupList.slice(0, 5).join(', ')}${dupList.length > 5 ? ' va boshqalar...' : ''}
+                        </div>
+                    `;
+                }
+
+                let svodMatchHtml = '';
+                if (data.target_count > 0) {
+                    if (data.is_matched) {
+                        svodMatchHtml = `
+                            <div class="p-2.5 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900 font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-600 text-base"></i>
+                                <span>Svod bilan 100% mos keldi: Svodda ${data.target_count} ta = Bazada ${data.final_count} ta ✅</span>
+                            </div>
+                        `;
+                    } else if (data.diff < 0) {
+                        svodMatchHtml = `
+                            <div class="p-2.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-900 font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-amber-600 text-base"></i>
+                                <span>Diqqat: Svod jadvalda ${data.target_count} nafar ko‘rsatilgan, lekin kiritilganlar ${data.final_count} nafar (${-data.diff} ta kam)! ⚠️</span>
+                            </div>
+                        `;
+                    } else {
+                        svodMatchHtml = `
+                            <div class="p-2.5 rounded-lg bg-purple-50 border border-purple-300 text-purple-900 font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-circle-exclamation text-purple-600 text-base"></i>
+                                <span>Diqqat: Svod jadvalda ${data.target_count} nafar ko‘rsatilgan, lekin kiritilganlar ${data.final_count} nafar (${data.diff} ta ortiqcha)! ⚠️</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                feedbackArea.innerHTML = `
+                    <div class="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 space-y-2">
+                        <div class="font-bold flex items-center gap-2">
+                            <i class="fa-solid fa-check-circle text-emerald-600"></i>
+                            <span>${data.message}</span>
+                        </div>
+                        ${svodMatchHtml}
+                        ${dupsHtml}
+                    </div>
+                `;
+
+                Swal.fire({
+                    title: 'Muvaffaqiyatli yuklandi!',
+                    text: `${data.imported_count} ta o‘quvchi bazaga kiritildi. Jadval yangilanmoqda...`,
+                    icon: data.is_matched ? 'success' : 'warning',
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                feedbackArea.classList.remove('hidden');
+                feedbackArea.innerHTML = `
+                    <div class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-800">
+                        <i class="fa-solid fa-circle-xmark mr-1"></i>
+                        <b>Xatolik:</b> ${data.detail || data.message || 'Yuklashda xatolik yuz berdi'}
+                    </div>
+                `;
+                Swal.fire('Xatolik', data.detail || data.message || 'Faylni yuklashda xatolik', 'error');
+            }
+        } catch(err) {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-check"></i> Tekshirish va Saqlash`;
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik yuz berdi', 'error');
+        }
+    }
+</script>
+{% endblock %}

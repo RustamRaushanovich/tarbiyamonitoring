@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Audit Jurnali | Farg‘ona MMTB Ijro Nazorati{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Header Banner -->
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center space-x-2">
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> Xavfsizlik va Nazorat
+                </span>
+                <span class="text-xs text-slate-400">• Oxirgi 100 ta amal</span>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800 mt-2">Tizim Amallari va Audit Jurnali</h1>
+            <p class="text-xs text-slate-500 mt-1">Platformada amalga oshirilgan barcha o‘zgarishlar, tasdiqlar, hisobotlar va Telegram buyruqlari xronologiyasi.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+            <a href="/api/admin/backup" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                <i class="fa-solid fa-download"></i> Zaxira olish (.zip)
+            </a>
+            <a href="/" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-arrow-left"></i> Bosh sahifa
+            </a>
+        </div>
+    </div>
+
+    <!-- Table of Audit Logs -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-600">
+                <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[11px]">
+                    <tr>
+                        <th class="py-3 px-4 w-16">ID</th>
+                        <th class="py-3 px-4 w-44">Vaqti</th>
+                        <th class="py-3 px-4 w-52">Foydalanuvchi</th>
+                        <th class="py-3 px-4 w-40">Amal turi</th>
+                        <th class="py-3 px-4">Tafsilotlar</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for log in logs %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-4 font-mono text-slate-400">#{{ log.id }}</td>
+                        <td class="py-3 px-4 font-medium text-slate-700 whitespace-nowrap">
+                            <i class="fa-regular fa-clock text-slate-400 mr-1"></i> {{ log.created_at[:19] }}
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="font-bold text-slate-800">{{ log.user_fio or 'Tizim foydalanuvchisi' }}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full font-semibold text-[10px]
+                                {% if 'Telegram' in log.action or 'Broadcast' in log.action %}bg-blue-100 text-blue-700
+                                {% elif 'Tasdiqlash' in log.action %}bg-emerald-100 text-emerald-700
+                                {% elif 'Qaytarish' in log.action %}bg-red-100 text-red-700
+                                {% elif 'Zaxira' in log.action %}bg-purple-100 text-purple-700
+                                {% else %}bg-slate-100 text-slate-700{% endif %}">
+                                {{ log.action }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-slate-700">
+                            {{ log.details }}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400 italic">Audit yozuvlari hali mavjud emas.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

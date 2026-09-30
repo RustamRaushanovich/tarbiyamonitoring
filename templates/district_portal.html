@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+
+{% block title %}{{ current_user.district_name }} | Shaxsiy Ish Bo‘limi{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- District Welcome Banner -->
+    <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-blue-800 text-white p-6 sm:p-8 rounded-3xl shadow-xl relative overflow-hidden">
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-white/20 text-white backdrop-blur-sm border border-white/20 flex items-center gap-1.5">
+                        <i class="fa-solid fa-building-flag text-yellow-300"></i>
+                        {{ current_user.district_name }}
+                    </span>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold 
+                        {% if dossier.risk_color == 'red' %}bg-red-500/80 text-white
+                        {% elif dossier.risk_color == 'amber' %}bg-amber-400 text-amber-950
+                        {% else %}bg-emerald-500/80 text-white{% endif %}">
+                        <i class="fa-solid fa-circle-dot text-[10px] mr-1"></i>
+                        {{ dossier.risk_level }}
+                    </span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                    Xush kelibsiz, {{ current_user.fio }}!
+                </h1>
+                <p class="text-xs sm:text-sm text-blue-200 max-w-2xl leading-relaxed">
+                    Ushbu shaxsiy kabinet orqali faqat sizning hududingizga oid 15-talik oylik monitoring jadvallari, berilgan topshiriqlar va 10-kunlik huquqbuzarliklar nazorati amalga oshiriladi.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="/monthly-15?district={{ current_user.district_name | urlencode }}" 
+                   class="px-5 py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs transition shadow-lg shadow-emerald-500/30 flex items-center gap-2">
+                    <i class="fa-solid fa-table-list text-sm"></i>
+                    <span>15-talikni To‘ldirish</span>
+                </a>
+                <button onclick="openChangePasswordModal()" 
+                        class="px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs transition border border-white/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-key text-xs text-yellow-300"></i>
+                    <span>Parolni o‘zgartirish</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Decorative background shapes -->
+        <div class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
+    </div>
+
+    <!-- 4 KPI Summary Cards for This District -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- 1. 15-talik -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">15-Talik Monitoring</span>
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900">18 ta varaq</div>
+                <p class="text-[11px] text-slate-500 mt-0.5">Svod va F.I.Sh jadvallari</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100">
+                <a href="/monthly-15?district={{ current_user.district_name | urlencode }}" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center justify-between">
+                    <span>To‘ldirishga o‘tish</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- 2. Assignments -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Topshiriqlar</span>
+                <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900">{{ assignments | length }} ta</div>
+                <p class="text-[11px] text-slate-500 mt-0.5">Shu tumanga biriktirilgan vazifalar</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100">
+                <a href="/district-assignments?district_id={{ current_user.district_id }}" class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center justify-between">
+                    <span>Hisobot yuklash</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- 3. Juvenile incidents -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">10-Kunlik Nazorat</span>
+                <div class="w-9 h-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900">{{ incidents | length }} ta</div>
+                <p class="text-[11px] text-slate-500 mt-0.5">Nazoratdagi huquqbuzarliklar</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100">
+                <a href="/incidents?district_id={{ current_user.district_id }}" class="text-xs font-bold text-red-600 hover:text-red-700 flex items-center justify-between">
+                    <span>O‘quvchilar ro‘yxati</span>
+                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- 4. Schools & Crime dynamic -->
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Jinoyatchilik Dinamikasi</span>
+                <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-sm">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+            </div>
+            <div class="mt-3">
+                <div class="text-2xl font-black text-slate-900">
+                    {{ dossier.crime_2026 }} ta 
+                    <span class="text-xs font-bold {% if dossier.crime_diff > 0 %}text-red-500{% elif dossier.crime_diff < 0 %}text-emerald-500{% else %}text-slate-500{% endif %}">
+                        ({% if dossier.crime_diff > 0 %}+{{ dossier.crime_diff }}{% else %}{{ dossier.crime_diff }}{% endif %})
+                    </span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-0.5">2025: {{ dossier.crime_2025 }} ta | Maktablar: {{ dossier.schools_count }} ta</p>
+            </div>
+            <div class="mt-4 pt-3 border-t border-slate-100">
+                <span class="text-xs font-semibold text-slate-500">Viloyat MMTB hisobi</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Tasks and Upload Section -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+        <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+                <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-clipboard-check text-blue-600"></i>
+                    Sizning hududingizga biriktirilgan faol topshiriqlar
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Hisobot fayllarini (PDF, Word, rasm) bevosita ushbu oynadan kompyuter bazasiga yuklang</p>
+            </div>
+            <a href="/district-assignments?district_id={{ current_user.district_id }}" class="text-xs font-bold text-blue-600 hover:text-blue-700 underline">
+                Barcha vazifalar sahifasi
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+                <thead class="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                    <tr>
+                        <th class="py-3 px-4">№</th>
+                        <th class="py-3 px-4">Topshiriq Mazmuni</th>
+                        <th class="py-3 px-4">Muddat</th>
+                        <th class="py-3 px-4">Holat</th>
+                        <th class="py-3 px-4">Yuklangan Dalillar</th>
+                        <th class="py-3 px-4 text-center">Harakat</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700">
+                    {% for a in assignments %}
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="py-3 px-4 font-bold text-slate-500">{{ loop.index }}</td>
+                        <td class="py-3 px-4 max-w-md">
+                            <div class="font-bold text-slate-900">{{ a.assignment_title }}</div>
+                            <div class="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{{ a.assignment_description }}</div>
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap font-medium text-slate-600">
+                            <i class="fa-regular fa-calendar text-[10px] text-slate-400 mr-1"></i>
+                            {{ a.deadline_date or 'Belgilanmagan' }}
+                        </td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-bold
+                                {% if a.status == 'Bajarildi' %}bg-emerald-100 text-emerald-700
+                                {% elif a.status == 'Kutilmoqda' %}bg-amber-100 text-amber-800
+                                {% else %}bg-blue-100 text-blue-700{% endif %}">
+                                {{ a.status }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-slate-600 whitespace-nowrap">
+                            <span class="inline-flex items-center gap-1">
+                                <i class="fa-solid fa-paperclip text-slate-400"></i>
+                                {{ a.proof_count or 0 }} ta fayl
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center whitespace-nowrap">
+                            <button onclick="openUploadModal({{ a.id }}, '{{ a.assignment_title | escape }}')" 
+                                    class="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[11px] border border-blue-200 transition shadow-2xs flex items-center gap-1.5 mx-auto">
+                                <i class="fa-solid fa-cloud-arrow-up"></i>
+                                Hisobot yuklash
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-slate-400 italic">
+                            Hozircha biriktirilgan faol topshiriqlar mavjud emas.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- ==================== MANDATORY / OPTIONAL CHANGE PASSWORD MODAL ==================== -->
+<div id="changePasswordModal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-sm {% if not current_user.must_change_password %}hidden{% endif %} flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden transform transition-all">
+        <div class="gradient-header text-white px-6 py-5 flex items-center justify-between">
+            <h3 class="text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-shield-halved text-yellow-300"></i>
+                <span>Parolni yangilash</span>
+            </h3>
+            {% if not current_user.must_change_password %}
+            <button onclick="closeChangePasswordModal()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+            {% endif %}
+        </div>
+
+        <div class="p-6 space-y-4">
+            {% if current_user.must_change_password %}
+            <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs leading-relaxed flex items-start gap-2.5">
+                <i class="fa-solid fa-triangle-exclamation text-amber-600 text-sm mt-0.5"></i>
+                <div>
+                    <b>Xavfsizlik talabi:</b> Siz tizimga boshlang‘ich <b>123</b> paroli bilan kirdingiz. Ishni davom ettirish uchun iltimos, o‘z shaxsiy yangi parolingizni belgilang.
+                </div>
+            </div>
+            {% else %}
+            <p class="text-xs text-slate-500">
+                Hisobingiz xavfsizligini ta’minlash uchun yangi shaxsiy parolni kiriting.
+            </p>
+            {% endif %}
+
+            <form id="changePasswordForm" onsubmit="handlePasswordChange(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Yangi parol <span class="text-red-500">*</span></label>
+                    <input type="password" id="newPassword" required minlength="4" placeholder="Kamida 4 ta belgi"
+                           class="w-full text-xs font-semibold px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Yangi parolni tasdiqlang <span class="text-red-500">*</span></label>
+                    <input type="password" id="confirmPassword" required minlength="4" placeholder="Yangi parolni takrorlang"
+                           class="w-full text-xs font-semibold px-3.5 py-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                </div>
+
+                <div class="pt-3 flex justify-end gap-2 border-t border-slate-100">
+                    {% if not current_user.must_change_password %}
+                    <button type="button" onclick="closeChangePasswordModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                        Bekor qilish
+                    </button>
+                    {% endif %}
+                    <button type="submit" id="savePwdBtn" class="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-check"></i> Parolni saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ==================== UPLOAD REPORT MODAL ==================== -->
+<div id="proofUploadModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden">
+        <div class="gradient-header text-white px-6 py-4 flex items-center justify-between">
+            <h3 class="text-base font-bold flex items-center gap-2">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                Hisobot fayli va dalillarni yuklash
+            </h3>
+            <button onclick="closeUploadModal()" class="text-white/80 hover:text-white text-2xl font-bold">&times;</button>
+        </div>
+
+        <form id="proofUploadForm" onsubmit="handleProofUpload(event)" class="p-6 space-y-4">
+            <input type="hidden" id="uploadAssignmentId" value="">
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Topshiriq</label>
+                <div id="uploadAssignmentTitle" class="text-xs font-semibold text-slate-800 p-2.5 bg-slate-50 rounded-lg border border-slate-200"></div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Bajarilish holati</label>
+                <select id="uploadStatus" class="w-full text-xs font-semibold px-3 py-2 rounded-lg border border-slate-300 bg-white">
+                    <option value="Bajarildi">Bajarildi</option>
+                    <option value="Jarayonda">Jarayonda</option>
+                    <option value="Kutilmoqda">Kutilmoqda</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Fayllarni tanlang (Bir nechta tanlash mumkin)</label>
+                <input type="file" id="proofFiles" multiple required
+                       class="w-full text-xs text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
+                <p class="text-[11px] text-slate-400 mt-1 italic">* Yuklangan fayllar avtomatik tarzda kompyuteringizdagi tegishli papkaga joylanadi</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Qisqacha izoh / tushuntirish</label>
+                <textarea id="uploadComment" rows="2" placeholder="Topshiriq ijrosi haqida qisqacha ma’lumot..." 
+                          class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeUploadModal()" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">
+                    Bekor qilish
+                </button>
+                <button type="submit" id="uploadSubmitBtn" class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-upload"></i> Fayllarni saqlash
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openChangePasswordModal() {
+        document.getElementById('changePasswordModal').classList.remove('hidden');
+    }
+    function closeChangePasswordModal() {
+        document.getElementById('changePasswordModal').classList.add('hidden');
+    }
+
+    async function handlePasswordChange(e) {
+        e.preventDefault();
+        const p1 = document.getElementById('newPassword').value;
+        const p2 = document.getElementById('confirmPassword').value;
+
+        if (p1 !== p2) {
+            Swal.fire('Diqqat', 'Kiritilgan yangi parollar bir-biriga mos kelmadi', 'warning');
+            return;
+        }
+
+        const btn = document.getElementById('savePwdBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saqlanmoqda...';
+
+        try {
+            const res = await fetch('/api/auth/change-password', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_password: p1 })
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: 'Parol muvaffaqiyatli yangilandi!',
+                    text: 'Yangi parolingiz muvaffaqiyatli saqlandi.',
+                    icon: 'success',
+                    timer: 1600,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Parolni saqlash';
+                Swal.fire('Xatolik', data.detail || 'Parolni yangilashda xatolik yuz berdi', 'error');
+            }
+        } catch(e) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> Parolni saqlash';
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik', 'error');
+        }
+    }
+
+    function openUploadModal(assignmentId, title) {
+        document.getElementById('uploadAssignmentId').value = assignmentId;
+        document.getElementById('uploadAssignmentTitle').innerText = title;
+        document.getElementById('proofUploadModal').classList.remove('hidden');
+    }
+    function closeUploadModal() {
+        document.getElementById('proofUploadModal').classList.add('hidden');
+    }
+
+    async function handleProofUpload(e) {
+        e.preventDefault();
+        const aid = document.getElementById('uploadAssignmentId').value;
+        const status = document.getElementById('uploadStatus').value;
+        const comment = document.getElementById('uploadComment').value;
+        const filesInput = document.getElementById('proofFiles');
+
+        if (!filesInput.files || filesInput.files.length === 0) {
+            Swal.fire('Diqqat', 'Kamida bitta hisobot faylini tanlang', 'warning');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('assignment_id', aid);
+        formData.append('status', status);
+        formData.append('comment', comment);
+        for (let i = 0; i < filesInput.files.length; i++) {
+            formData.append('files', filesInput.files[i]);
+        }
+
+        Swal.fire({
+            title: 'Fayllar yuklanmoqda...',
+            text: 'Fayllar kompyuter papkasiga saqlanmoqda',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const res = await fetch('/api/assignments/upload-proof', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            Swal.close();
+
+            if (data.status === 'success') {
+                Swal.fire({
+                    title: 'Muvaffaqiyatli yuklandi!',
+                    text: data.message,
+                    icon: 'success',
+                    timer: 1800,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
+                });
+            } else {
+                Swal.fire('Xatolik', data.detail || 'Yuklashda xatolik', 'error');
+            }
+        } catch (err) {
+            Swal.close();
+            Swal.fire('Xatolik', 'Server bilan bog‘lanishda xatolik', 'error');
+        }
+    }
+</script>
+{% endblock %}
